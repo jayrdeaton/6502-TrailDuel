@@ -1,5 +1,5 @@
 ; =============================================================================
-;   game.asm - pixel-precision LightCycles game loop
+;   game.asm - pixel-precision TrailDuel game loop
 ; =============================================================================
 
 .segment "CART"
@@ -241,8 +241,8 @@ DrawTitleScreen:
 
   lda #58
   sta TEXT_ROW
-  lda #56
-  sta TEXT_COL
+  lda #72                     ; "TRAIL DUEL" is 10 cells of 12px; 72 keeps both
+  sta TEXT_COL                ; words on 8px color-byte boundaries (72 and 144)
   lda #TMS_WHITE
   sta TEXT_COLOR
   lda #<TitleLine1
@@ -368,7 +368,7 @@ DrawTitleScreen:
 
 ; -----------------------------------------------------------------------------
 ; DrawTitleDecoration - the title underlined in each player's trail color:
-; "LIGHT" in P1's, "CYCLES" in P2's, so the title screen reads as the same
+; "TRAIL" in P1's, "DUEL" in P2's, so the title screen reads as the same
 ; game rather than a bolted-on splash, right from the two-word split the
 ; name already has. Split into DrawP1Underline/DrawP2Underline (rather than
 ; one inline pass) so DrawColorLines can also call just one of them to
@@ -380,7 +380,7 @@ DrawTitleDecoration:
   jmp DrawP2Underline
 
 ; -----------------------------------------------------------------------------
-; DrawP1Underline - erases and redraws the underline beneath "LIGHT" (row
+; DrawP1Underline - erases and redraws the underline beneath "TRAIL" (row
 ; 74) in P1's trail color, with a single white lead pixel at its rightmost
 ; end, closest to P2's line, so the two read as racing toward each other
 ; across the gap between the words. White outright, not a brighter tint of
@@ -392,9 +392,9 @@ DrawTitleDecoration:
 ; table is one color per 8 horizontal pixels per scanline (the same
 ; granularity that caused the MODE colon to render invisible earlier), so a
 ; pixel can only carry a color different from its neighbors' if it's the
-; only thing touched in its 8-pixel-aligned byte. Column 112 is the first
+; only thing touched in its 8-pixel-aligned byte. Column 128 is the first
 ; pixel of such a byte, right after the body's last byte-aligned column
-; (111), so the body shrinks 1px (to end at 111 instead of 113) to land
+; (127), so the body stops 2px short of the L's right edge (129) to land
 ; exactly there -- no gap, no color collision.
 ; Must erase first, not just redraw over the old pixels -- PixelSet only
 ; ever turns bits on, and a color byte already claimed by the old color
@@ -408,7 +408,7 @@ DrawP1Underline:
   lda #57
   sta TEXT_COL_I
   lda #74
-  ldx #56
+  ldx #72
   jsr EraseRect
 
   ldy P1_TRAIL_COLOR
@@ -417,35 +417,35 @@ DrawP1Underline:
 @bodyLoop:
   lda TEXT_COL_I
   clc
-  adc #56
+  adc #72
   tax
   lda #74
   ldy TEXT_COLOR
   jsr PixelSet
   inc TEXT_COL_I
   lda TEXT_COL_I
-  cmp #56                     ; body is cols 56-111 (56px, an exact run of
-  bne @bodyLoop                ; 7 color bytes); the lead pixel is at 112
+  cmp #56                     ; body is cols 72-127 (56px, an exact run of
+  bne @bodyLoop                ; 7 color bytes); the lead pixel is at 128
 
   lda #74
-  ldx #112
+  ldx #128
   ldy #TMS_WHITE
   jsr PixelSet
   rts
 
 ; -----------------------------------------------------------------------------
 ; DrawP2Underline - same idea as DrawP1Underline, for the line beneath
-; "CYCLES" (row 74) in P2's trail color. Its white lead pixel is at the
+; "DUEL" (row 74) in P2's trail color. Its white lead pixel is at the
 ; LEFTMOST end instead -- P2's line faces P1's across the gap, so the lead
 ; has to point the other way for the two to race toward each other rather
 ; than both pointing right.
-; Column 128, the body's natural left edge, is ALREADY the first pixel of
+; Column 144, the body's natural left edge, is ALREADY the first pixel of
 ; an 8-pixel-aligned color byte -- there's no room to its left within that
 ; byte for an isolated lead pixel without colliding with the body that
-; starts right there. So the lead goes 1px further left, at column 127 (the
+; starts right there. So the lead goes 1px further left, at column 143 (the
 ; last pixel of the PRECEDING byte, otherwise untouched -- that's clear
-; space in the gap between the words), and the body keeps its full original
-; width unchanged at 128-197. See DrawP1Underline for why the split has to
+; space in the gap between the words), and the body spans the word's full
+; width at 144-189. See DrawP1Underline for why the split has to
 ; land on a byte boundary at all.
 ; Clobbers: A, X, Y, SCAN_TMP, SCAN_TMP2, TEXT_COLOR, TEXT_ROW_I, TEXT_COL_I,
 ;   plus everything PixelSet/PixelClear clobber
@@ -453,14 +453,14 @@ DrawP1Underline:
 DrawP2Underline:
   lda #1
   sta TEXT_ROW_I
-  lda #71
+  lda #47
   sta TEXT_COL_I
   lda #74
-  ldx #127
+  ldx #143
   jsr EraseRect
 
   lda #74
-  ldx #127
+  ldx #143
   ldy #TMS_WHITE
   jsr PixelSet
 
@@ -471,14 +471,14 @@ DrawP2Underline:
 @bodyLoop:
   lda TEXT_COL_I
   clc
-  adc #127
+  adc #143
   tax
   lda #74
   ldy TEXT_COLOR
   jsr PixelSet
   inc TEXT_COL_I
   lda TEXT_COL_I
-  cmp #71
+  cmp #47
   bne @bodyLoop
   rts
 
@@ -662,7 +662,7 @@ DrawColorLines:
 ; LEFT/RIGHT on their own joystick, or A/D (P1) / arrow LEFT-RIGHT (P2) on
 ; the keyboard as a fallback. Reuses JOY_STATE/JOY_STATE2 and KB_DIR_P1/
 ; KB_DIR_P2 already populated this tick by PollInput/PollInputP2 (see
-; LightCycles.asm's MainLoop) instead of re-reading hardware or re-draining
+; TrailDuel.asm's MainLoop) instead of re-reading hardware or re-draining
 ; the keyboard - Chrin's buffer is already empty by the time this runs.
 ; Joystick-first per player: if that player's joystick shows LEFT or RIGHT
 ; this poll, the keyboard is not consulted this poll. MENU_P1_PREV/
@@ -936,7 +936,7 @@ SetModeFromInput:
   rts
 
 TitleLine1:
-  .byte "LIGHT CYCLES",0
+  .byte "TRAIL DUEL",0
 
 TitleLine4:
   .byte "A: START",0

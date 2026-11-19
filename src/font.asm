@@ -1,5 +1,5 @@
 ; ============================================================
-; font.asm - 5x7 pixel bitmap font for LightCycles (TMS9918 Graphics II)
+; font.asm - 5x7 pixel bitmap font for TrailDuel (TMS9918 Graphics II)
 ; ============================================================
 ; FontData is a dense table covering ASCII $20 (space) through $5A ('Z')
 ; inclusive, 5 bytes per glyph, in ascending ASCII order with no gaps.

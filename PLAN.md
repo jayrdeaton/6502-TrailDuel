@@ -1,7 +1,7 @@
-# Plan: Ship 6502 LightCycles MVP then Expand
+# Plan: Ship 6502 TrailDuel MVP then Expand
 
 ## Goal
-Deliver a deterministic, cell-based Tron-style LightCycles cartridge for the 6502 platform, with two-player support first and optional one-player AI as a follow-up.
+Deliver a deterministic, cell-based TrailDuel cartridge for the 6502 platform, with two-player support first and optional one-player AI as a follow-up.
 
 ## Scope
 - Two-player mode is first-class.
@@ -99,5 +99,5 @@ Deliver a deterministic, cell-based Tron-style LightCycles cartridge for the 650
 - /Users/jay/Developer/6502-Pong/src/physics.asm
 
 ## Definition of Done
-- A playable LightCycles cartridge exists with stable two-player gameplay and deterministic collision behavior.
+- A playable TrailDuel cartridge exists with stable two-player gameplay and deterministic collision behavior.
 - Plan documents and build scripts are sufficient to continue implementation without rediscovery.

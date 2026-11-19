@@ -1,5 +1,5 @@
 ; =============================================================================
-;   input.asm - LightCycles input shim using 6502-Lib polling
+;   input.asm - TrailDuel input shim using 6502-Lib polling
 ; =============================================================================
 ;   Joystick-first, keyboard-fallback: PollInput (P1) and PollInputP2 each
 ;   poll their own joystick port via 6502-Lib's PollJoy1/PollJoy2, and fall

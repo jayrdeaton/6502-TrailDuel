@@ -1,9 +1,9 @@
 ca65 V2.19 - Git 547d92358
-Main file   : LightCycles.asm
-Current file: LightCycles.asm
+Main file   : TrailDuel.asm
+Current file: TrailDuel.asm
 
 000000r 1               ; =============================================================================
-000000r 1               ;   LightCycles.asm - cartridge entry point and main loop skeleton
+000000r 1               ;   TrailDuel.asm - cartridge entry point and main loop skeleton
 000000r 1               ; =============================================================================
 000000r 1               
 000000r 1               .setcpu "65C02"
@@ -890,7 +890,7 @@ Current file: LightCycles.asm
 000000r 2               
 000000r 1               .include "src/zeropage.inc"
 000000r 2               ; =============================================================================
-000000r 2               ;   zeropage.inc - initial zero-page layout for LightCycles
+000000r 2               ;   zeropage.inc - initial zero-page layout for TrailDuel
 000000r 2               ; =============================================================================
 000000r 2               
 000000r 2               STATE_TITLE     = 0
@@ -961,20 +961,20 @@ Current file: LightCycles.asm
 000000r 2               KB_DIR_P1       := $68   ; DrainKeyboardSplit output: WASD direction (P1)
 000000r 2               KB_DIR_P2       := $69   ; DrainKeyboardSplit output: arrow-key direction (P2)
 000000r 2               KB_FIRE         := $6A   ; DrainKeyboardSplit output: 1 if either fire key seen
-000000r 2                                         ; this call - the byte LightCycles actually reads,
+000000r 2                                         ; this call - the byte TrailDuel actually reads,
 000000r 2                                         ; since START/pause is one shared action here, not
 000000r 2                                         ; per-player
 000000r 2               PICKER_TMP      := $6B   ; HandleColorPicker scratch: effective LEFT/RIGHT byte
-000000r 2               KB_DIR          := $6C   ; unused output of DrainKeyboardCombined - LightCycles
+000000r 2               KB_DIR          := $6C   ; unused output of DrainKeyboardCombined - TrailDuel
 000000r 2                                         ; calls DrainKeyboardSplit, not Combined, but the
 000000r 2                                         ; library assembles as one unit so KB_DIR must still
 000000r 2                                         ; resolve to something
 000000r 2               KB_FIRE_P1      := $6D   ; DrainKeyboardSplit output: space seen this call.
-000000r 2                                         ; Unused by LightCycles (no per-player fire action)
+000000r 2                                         ; Unused by TrailDuel (no per-player fire action)
 000000r 2                                         ; but must resolve to something for the same reason
 000000r 2                                         ; as KB_DIR above.
 000000r 2               KB_FIRE_P2      := $6E   ; DrainKeyboardSplit output: enter seen this call.
-000000r 2                                         ; Unused by LightCycles, same reason as KB_FIRE_P1.
+000000r 2                                         ; Unused by TrailDuel, same reason as KB_FIRE_P1.
 000000r 2               
 000000r 2               ; --- Bitmap-mode text renderer (src/font.asm, DrawChar/DrawText in vdp.asm) ---
 000000r 2               TEXT_ROW        := $6F   ; caller-set: top-left Y pixel origin
@@ -1032,7 +1032,7 @@ Current file: LightCycles.asm
 000000r 2               
 000000r 1               .include "src/tiles.asm"
 000000r 2               ; =============================================================================
-000000r 2               ;   tiles.asm - initial tile and playfield constants for LightCycles
+000000r 2               ;   tiles.asm - initial tile and playfield constants for TrailDuel
 000000r 2               ; =============================================================================
 000000r 2               
 000000r 2               GRID_COLS   = 32
@@ -1122,7 +1122,7 @@ Current file: LightCycles.asm
 000028r 2               
 000028r 1               .include "src/vdp.asm"
 000028r 2               ; =============================================================================
-000028r 2               ;   vdp.asm - TMS9918 Graphics II bitmap renderer for LightCycles
+000028r 2               ;   vdp.asm - TMS9918 Graphics II bitmap renderer for TrailDuel
 000028r 2               ; =============================================================================
 000028r 2               
 000028r 2               .segment "CART"
@@ -2612,7 +2612,7 @@ Current file: LightCycles.asm
 0008ABr 2               
 0008ABr 1               .include "src/font.asm"
 0008ABr 2               ; ============================================================
-0008ABr 2               ; font.asm - 5x7 pixel bitmap font for LightCycles (TMS9918 Graphics II)
+0008ABr 2               ; font.asm - 5x7 pixel bitmap font for TrailDuel (TMS9918 Graphics II)
 0008ABr 2               ; ============================================================
 0008ABr 2               ; FontData is a dense table covering ASCII $20 (space) through $5A ('Z')
 0008ABr 2               ; inclusive, 5 bytes per glyph, in ascending ASCII order with no gaps.
@@ -2850,7 +2850,7 @@ Current file: LightCycles.asm
 0009DCr 2               
 0009DCr 1               .include "src/input.asm"
 0009DCr 2               ; =============================================================================
-0009DCr 2               ;   input.asm - LightCycles input shim using 6502-Lib polling
+0009DCr 2               ;   input.asm - TrailDuel input shim using 6502-Lib polling
 0009DCr 2               ; =============================================================================
 0009DCr 2               ;   Joystick-first, keyboard-fallback: PollInput (P1) and PollInputP2 each
 0009DCr 2               ;   poll their own joystick port via 6502-Lib's PollJoy1/PollJoy2, and fall
@@ -3365,7 +3365,7 @@ Current file: LightCycles.asm
 000B9Cr 2               
 000B9Cr 1               .include "src/sound.asm"
 000B9Cr 2               ; =============================================================================
-000B9Cr 2               ;   sound.asm - sound hook skeleton for LightCycles
+000B9Cr 2               ;   sound.asm - sound hook skeleton for TrailDuel
 000B9Cr 2               ; =============================================================================
 000B9Cr 2               
 000B9Cr 2               .segment "CART"
@@ -3376,7 +3376,7 @@ Current file: LightCycles.asm
 000B9Dr 2               
 000B9Dr 1               .include "src/game.asm"
 000B9Dr 2               ; =============================================================================
-000B9Dr 2               ;   game.asm - pixel-precision LightCycles game loop
+000B9Dr 2               ;   game.asm - pixel-precision TrailDuel game loop
 000B9Dr 2               ; =============================================================================
 000B9Dr 2               
 000B9Dr 2               .segment "CART"
@@ -3618,8 +3618,8 @@ Current file: LightCycles.asm
 000CE8r 2               
 000CE8r 2  A9 3A          lda #58
 000CEAr 2  85 6F          sta TEXT_ROW
-000CECr 2  A9 38          lda #56
-000CEEr 2  85 70          sta TEXT_COL
+000CECr 2  A9 48          lda #72                     ; "TRAIL DUEL" is 10 cells of 12px; 72 keeps both
+000CEEr 2  85 70          sta TEXT_COL                ; words on 8px color-byte boundaries (72 and 144)
 000CF0r 2  A9 0F          lda #TMS_WHITE
 000CF2r 2  85 71          sta TEXT_COLOR
 000CF4r 2  A9 rr          lda #<TitleLine1
@@ -3745,7 +3745,7 @@ Current file: LightCycles.asm
 000DA7r 2               
 000DA7r 2               ; -----------------------------------------------------------------------------
 000DA7r 2               ; DrawTitleDecoration - the title underlined in each player's trail color:
-000DA7r 2               ; "LIGHT" in P1's, "CYCLES" in P2's, so the title screen reads as the same
+000DA7r 2               ; "TRAIL" in P1's, "DUEL" in P2's, so the title screen reads as the same
 000DA7r 2               ; game rather than a bolted-on splash, right from the two-word split the
 000DA7r 2               ; name already has. Split into DrawP1Underline/DrawP2Underline (rather than
 000DA7r 2               ; one inline pass) so DrawColorLines can also call just one of them to
@@ -3757,7 +3757,7 @@ Current file: LightCycles.asm
 000DAAr 2  4C rr rr       jmp DrawP2Underline
 000DADr 2               
 000DADr 2               ; -----------------------------------------------------------------------------
-000DADr 2               ; DrawP1Underline - erases and redraws the underline beneath "LIGHT" (row
+000DADr 2               ; DrawP1Underline - erases and redraws the underline beneath "TRAIL" (row
 000DADr 2               ; 74) in P1's trail color, with a single white lead pixel at its rightmost
 000DADr 2               ; end, closest to P2's line, so the two read as racing toward each other
 000DADr 2               ; across the gap between the words. White outright, not a brighter tint of
@@ -3769,9 +3769,9 @@ Current file: LightCycles.asm
 000DADr 2               ; table is one color per 8 horizontal pixels per scanline (the same
 000DADr 2               ; granularity that caused the MODE colon to render invisible earlier), so a
 000DADr 2               ; pixel can only carry a color different from its neighbors' if it's the
-000DADr 2               ; only thing touched in its 8-pixel-aligned byte. Column 112 is the first
+000DADr 2               ; only thing touched in its 8-pixel-aligned byte. Column 128 is the first
 000DADr 2               ; pixel of such a byte, right after the body's last byte-aligned column
-000DADr 2               ; (111), so the body shrinks 1px (to end at 111 instead of 113) to land
+000DADr 2               ; (127), so the body stops 2px short of the L's right edge (129) to land
 000DADr 2               ; exactly there -- no gap, no color collision.
 000DADr 2               ; Must erase first, not just redraw over the old pixels -- PixelSet only
 000DADr 2               ; ever turns bits on, and a color byte already claimed by the old color
@@ -3785,7 +3785,7 @@ Current file: LightCycles.asm
 000DB1r 2  A9 39          lda #57
 000DB3r 2  85 76          sta TEXT_COL_I
 000DB5r 2  A9 4A          lda #74
-000DB7r 2  A2 38          ldx #56
+000DB7r 2  A2 48          ldx #72
 000DB9r 2  20 rr rr       jsr EraseRect
 000DBCr 2               
 000DBCr 2  A4 64          ldy P1_TRAIL_COLOR
@@ -3794,35 +3794,35 @@ Current file: LightCycles.asm
 000DC2r 2               @bodyLoop:
 000DC2r 2  A5 76          lda TEXT_COL_I
 000DC4r 2  18             clc
-000DC5r 2  69 38          adc #56
+000DC5r 2  69 48          adc #72
 000DC7r 2  AA             tax
 000DC8r 2  A9 4A          lda #74
 000DCAr 2  A4 71          ldy TEXT_COLOR
 000DCCr 2  20 rr rr       jsr PixelSet
 000DCFr 2  E6 76          inc TEXT_COL_I
 000DD1r 2  A5 76          lda TEXT_COL_I
-000DD3r 2  C9 38          cmp #56                     ; body is cols 56-111 (56px, an exact run of
-000DD5r 2  D0 EB          bne @bodyLoop                ; 7 color bytes); the lead pixel is at 112
+000DD3r 2  C9 38          cmp #56                     ; body is cols 72-127 (56px, an exact run of
+000DD5r 2  D0 EB          bne @bodyLoop                ; 7 color bytes); the lead pixel is at 128
 000DD7r 2               
 000DD7r 2  A9 4A          lda #74
-000DD9r 2  A2 70          ldx #112
+000DD9r 2  A2 80          ldx #128
 000DDBr 2  A0 0F          ldy #TMS_WHITE
 000DDDr 2  20 rr rr       jsr PixelSet
 000DE0r 2  60             rts
 000DE1r 2               
 000DE1r 2               ; -----------------------------------------------------------------------------
 000DE1r 2               ; DrawP2Underline - same idea as DrawP1Underline, for the line beneath
-000DE1r 2               ; "CYCLES" (row 74) in P2's trail color. Its white lead pixel is at the
+000DE1r 2               ; "DUEL" (row 74) in P2's trail color. Its white lead pixel is at the
 000DE1r 2               ; LEFTMOST end instead -- P2's line faces P1's across the gap, so the lead
 000DE1r 2               ; has to point the other way for the two to race toward each other rather
 000DE1r 2               ; than both pointing right.
-000DE1r 2               ; Column 128, the body's natural left edge, is ALREADY the first pixel of
+000DE1r 2               ; Column 144, the body's natural left edge, is ALREADY the first pixel of
 000DE1r 2               ; an 8-pixel-aligned color byte -- there's no room to its left within that
 000DE1r 2               ; byte for an isolated lead pixel without colliding with the body that
-000DE1r 2               ; starts right there. So the lead goes 1px further left, at column 127 (the
+000DE1r 2               ; starts right there. So the lead goes 1px further left, at column 143 (the
 000DE1r 2               ; last pixel of the PRECEDING byte, otherwise untouched -- that's clear
-000DE1r 2               ; space in the gap between the words), and the body keeps its full original
-000DE1r 2               ; width unchanged at 128-197. See DrawP1Underline for why the split has to
+000DE1r 2               ; space in the gap between the words), and the body spans the word's full
+000DE1r 2               ; width at 144-189. See DrawP1Underline for why the split has to
 000DE1r 2               ; land on a byte boundary at all.
 000DE1r 2               ; Clobbers: A, X, Y, SCAN_TMP, SCAN_TMP2, TEXT_COLOR, TEXT_ROW_I, TEXT_COL_I,
 000DE1r 2               ;   plus everything PixelSet/PixelClear clobber
@@ -3830,14 +3830,14 @@ Current file: LightCycles.asm
 000DE1r 2               DrawP2Underline:
 000DE1r 2  A9 01          lda #1
 000DE3r 2  85 75          sta TEXT_ROW_I
-000DE5r 2  A9 47          lda #71
+000DE5r 2  A9 2F          lda #47
 000DE7r 2  85 76          sta TEXT_COL_I
 000DE9r 2  A9 4A          lda #74
-000DEBr 2  A2 7F          ldx #127
+000DEBr 2  A2 8F          ldx #143
 000DEDr 2  20 rr rr       jsr EraseRect
 000DF0r 2               
 000DF0r 2  A9 4A          lda #74
-000DF2r 2  A2 7F          ldx #127
+000DF2r 2  A2 8F          ldx #143
 000DF4r 2  A0 0F          ldy #TMS_WHITE
 000DF6r 2  20 rr rr       jsr PixelSet
 000DF9r 2               
@@ -3848,14 +3848,14 @@ Current file: LightCycles.asm
 000E01r 2               @bodyLoop:
 000E01r 2  A5 76          lda TEXT_COL_I
 000E03r 2  18             clc
-000E04r 2  69 7F          adc #127
+000E04r 2  69 8F          adc #143
 000E06r 2  AA             tax
 000E07r 2  A9 4A          lda #74
 000E09r 2  A4 71          ldy TEXT_COLOR
 000E0Br 2  20 rr rr       jsr PixelSet
 000E0Er 2  E6 76          inc TEXT_COL_I
 000E10r 2  A5 76          lda TEXT_COL_I
-000E12r 2  C9 47          cmp #71
+000E12r 2  C9 2F          cmp #47
 000E14r 2  D0 EB          bne @bodyLoop
 000E16r 2  60             rts
 000E17r 2               
@@ -4039,7 +4039,7 @@ Current file: LightCycles.asm
 000EEAr 2               ; LEFT/RIGHT on their own joystick, or A/D (P1) / arrow LEFT-RIGHT (P2) on
 000EEAr 2               ; the keyboard as a fallback. Reuses JOY_STATE/JOY_STATE2 and KB_DIR_P1/
 000EEAr 2               ; KB_DIR_P2 already populated this tick by PollInput/PollInputP2 (see
-000EEAr 2               ; LightCycles.asm's MainLoop) instead of re-reading hardware or re-draining
+000EEAr 2               ; TrailDuel.asm's MainLoop) instead of re-reading hardware or re-draining
 000EEAr 2               ; the keyboard - Chrin's buffer is already empty by the time this runs.
 000EEAr 2               ; Joystick-first per player: if that player's joystick shows LEFT or RIGHT
 000EEAr 2               ; this poll, the keyboard is not consulted this poll. MENU_P1_PREV/
@@ -4313,847 +4313,847 @@ Current file: LightCycles.asm
 00105Fr 2  60             rts
 001060r 2               
 001060r 2               TitleLine1:
-001060r 2  4C 49 47 48    .byte "LIGHT CYCLES",0
-001064r 2  54 20 43 59  
-001068r 2  43 4C 45 53  
-00106Dr 2               
-00106Dr 2               TitleLine4:
-00106Dr 2  41 3A 20 53    .byte "A: START",0
-001071r 2  54 41 52 54  
-001075r 2  00           
-001076r 2               
-001076r 2               WinnerP1:
-001076r 2  50 4C 41 59    .byte "PLAYER 1 WINS",0
-00107Ar 2  45 52 20 31  
-00107Er 2  20 57 49 4E  
-001084r 2               
-001084r 2               WinnerP2:
-001084r 2  50 4C 41 59    .byte "PLAYER 2 WINS",0
-001088r 2  45 52 20 32  
-00108Cr 2  20 57 49 4E  
-001092r 2               
-001092r 2               WinnerDraw:
-001092r 2  44 4F 55 42    .byte "DOUBLE CRASH",0
-001096r 2  4C 45 20 43  
-00109Ar 2  52 41 53 48  
-00109Fr 2               
-00109Fr 2               ModeLabel:
-00109Fr 2  4D 4F 44 45    .byte "MODE:",0
-0010A3r 2  3A 00        
-0010A5r 2               
-0010A5r 2               ModeSuffix1P:
-0010A5r 2  20 31 50 00    .byte " 1P",0
-0010A9r 2               
-0010A9r 2               ModeSuffix2P:
-0010A9r 2  20 32 50 00    .byte " 2P",0
-0010ADr 2               
-0010ADr 2               P1ColorLabel:
-0010ADr 2  50 31 3A 00    .byte "P1:",0
-0010B1r 2               
-0010B1r 2               P2ColorLabel:
-0010B1r 2  50 32 3A 00    .byte "P2:",0
-0010B5r 2               
-0010B5r 2               ; One saturated, vivid shade per hue -- rendered every candidate shade to
-0010B5r 2               ; the screen and looked at them side by side rather than going by name.
-0010B5r 2               ; Result: for red and yellow specifically, the "light" tier is the pastel
-0010B5r 2               ; one (salmon, pale khaki) and the "medium"/"dark" tier is the more vivid,
-0010B5r 2               ; saturated look (true red, golden yellow) -- backwards from what the
-0010B5r 2               ; names suggest. Blue's the exception: LT_BLUE reads as a rich periwinkle,
-0010B5r 2               ; not pastel, so it stays over DK_BLUE. Green only offers MED_GREEN as the
-0010B5r 2               ; vivid pick over the minty LT_GREEN. CYAN and MAGENTA only come in one
-0010B5r 2               ; (already vivid) shade. GRAY rounds it out as a neutral -- WHITE was
-0010B5r 2               ; considered too, but it's close enough to GRAY to not read as a distinct
-0010B5r 2               ; option, and would've meant the lead pixel/head sprite (both hardcoded
-0010B5r 2               ; white) blending into that one trail color instead of standing out.
-0010B5r 2               TrailFgColorTable:
-0010B5r 2  08 0A 02 07    .byte TMS_MED_RED, TMS_DK_YELLOW, TMS_MED_GREEN, TMS_CYAN, TMS_LT_BLUE, TMS_MAGENTA, TMS_GRAY
-0010B9r 2  05 0D 0E     
-0010BCr 2               
-0010BCr 2               ApplyRequestedTurns:
-0010BCr 2                 ; P1: reject exact 180 reversals.
-0010BCr 2  A5 42          lda P1_DIR
-0010BEr 2  C9 00          cmp #DIR_UP
-0010C0r 2  D0 06          bne @p1NotUp
-0010C2r 2  A5 43          lda P1_NEXT_DIR
-0010C4r 2  C9 01          cmp #DIR_DOWN
-0010C6r 2  F0 5B          beq @p1Done
-0010C8r 2               @p1NotUp:
-0010C8r 2  A5 42          lda P1_DIR
-0010CAr 2  C9 01          cmp #DIR_DOWN
-0010CCr 2  D0 06          bne @p1NotDown
-0010CEr 2  A5 43          lda P1_NEXT_DIR
-0010D0r 2  C9 00          cmp #DIR_UP
-0010D2r 2  F0 4F          beq @p1Done
-0010D4r 2               @p1NotDown:
-0010D4r 2  A5 42          lda P1_DIR
-0010D6r 2  C9 02          cmp #DIR_LEFT
-0010D8r 2  D0 06          bne @p1NotLeft
-0010DAr 2  A5 43          lda P1_NEXT_DIR
-0010DCr 2  C9 03          cmp #DIR_RIGHT
-0010DEr 2  F0 43          beq @p1Done
-0010E0r 2               @p1NotLeft:
-0010E0r 2  A5 42          lda P1_DIR
-0010E2r 2  C9 03          cmp #DIR_RIGHT
-0010E4r 2  D0 06          bne @p1Apply
-0010E6r 2  A5 43          lda P1_NEXT_DIR
-0010E8r 2  C9 02          cmp #DIR_LEFT
-0010EAr 2  F0 37          beq @p1Done
-0010ECr 2               @p1Apply:
-0010ECr 2                 ; Turning onto a vertical heading (UP/DOWN) is only gated by X being
-0010ECr 2                 ; byte-aligned (a multiple of 8, matching the TMS9918 color table's own
-0010ECr 2                 ; 8-pixel granularity) when P2 actually has a claim somewhere in the
-0010ECr 2                 ; column of color bytes this turn is about to travel through -- see
-0010ECr 2                 ; the big comment on PixelSetP1Trail for why two different-colored
-0010ECr 2                 ; trails sharing part of one 8-pixel-wide color byte can never both
-0010ECr 2                 ; render correctly, full stop, on this hardware. That's only a real
-0010ECr 2                 ; risk when the other trail is somewhere nearby; the overwhelming
-0010ECr 2                 ; majority of turns happen nowhere near P2's trail at all, and gating
-0010ECr 2                 ; every single one of those unconditionally meant instant turns almost
-0010ECr 2                 ; never happened -- up to 7 ticks (560ms at this game's 80ms tick) of
-0010ECr 2                 ; input lag on turns that were never actually in any danger of a color
-0010ECr 2                 ; clash. PathClearOfOpponent scans P2_OWN_BUF down the whole column
-0010ECr 2                 ; this run is about to travel, from my current row out to the wall --
-0010ECr 2                 ; not just my current row, which used to miss a P2 trail sitting
-0010ECr 2                 ; further down the same column and let the turn through anyway, only
-0010ECr 2                 ; to bleed once the run reached it. Empty the whole way means turning
-0010ECr 2                 ; right now is completely safe, so it takes effect immediately, same
-0010ECr 2                 ; as it always did before any of this. Only when P2 already claims
-0010ECr 2                 ; some row along that column does the alignment gate kick in, exactly
-0010ECr 2                 ; as before. (The one case this still can't see is a P2 trail that
-0010ECr 2                 ; hasn't reached that column yet AT ALL -- there's nothing in memory
-0010ECr 2                 ; yet to scan for a move P2 hasn't made. That residual case falls back
-0010ECr 2                 ; to the majority-vote/white-clash system in PixelSetP1Trail, same as
-0010ECr 2                 ; any other near-miss.)
-0010ECr 2  A5 43          lda P1_NEXT_DIR
-0010EEr 2  C9 00          cmp #DIR_UP
-0010F0r 2  F0 09          beq @p1CheckSafety
-0010F2r 2  C9 01          cmp #DIR_DOWN
-0010F4r 2  F0 05          beq @p1CheckSafety
-0010F6r 2  85 42          sta P1_DIR
-0010F8r 2  4C rr rr       jmp @p1Done
-0010FBr 2               @p1CheckSafety:
-0010FBr 2  A5 40          lda P1_X
-0010FDr 2  85 77          sta SCAN_TMP2
-0010FFr 2  A5 41          lda P1_Y
-001101r 2  85 55          sta SCAN_TMP
-001103r 2  A9 00          lda #<P2_OWN_BUF
-001105r 2  85 72          sta FONT_PTR
-001107r 2  A9 68          lda #>P2_OWN_BUF
-001109r 2  85 73          sta FONT_PTR+1
-00110Br 2  A5 43          lda P1_NEXT_DIR
-00110Dr 2  20 rr rr       jsr PathClearOfOpponent
-001110r 2  90 07          bcc @p1CheckAlign
-001112r 2  A5 43          lda P1_NEXT_DIR
-001114r 2  85 42          sta P1_DIR
-001116r 2  4C rr rr       jmp @p1Done
-001119r 2               @p1CheckAlign:
-001119r 2  A5 40          lda P1_X
-00111Br 2  29 07          and #7
-00111Dr 2  D0 04          bne @p1Done
-00111Fr 2  A5 43          lda P1_NEXT_DIR
-001121r 2  85 42          sta P1_DIR
-001123r 2               @p1Done:
-001123r 2               
-001123r 2                 ; P2: same reversal rule.
-001123r 2  A5 47          lda P2_DIR
-001125r 2  C9 00          cmp #DIR_UP
-001127r 2  D0 06          bne @p2NotUp
-001129r 2  A5 48          lda P2_NEXT_DIR
-00112Br 2  C9 01          cmp #DIR_DOWN
-00112Dr 2  F0 5B          beq @p2Done
-00112Fr 2               @p2NotUp:
-00112Fr 2  A5 47          lda P2_DIR
-001131r 2  C9 01          cmp #DIR_DOWN
-001133r 2  D0 06          bne @p2NotDown
-001135r 2  A5 48          lda P2_NEXT_DIR
-001137r 2  C9 00          cmp #DIR_UP
-001139r 2  F0 4F          beq @p2Done
-00113Br 2               @p2NotDown:
-00113Br 2  A5 47          lda P2_DIR
-00113Dr 2  C9 02          cmp #DIR_LEFT
-00113Fr 2  D0 06          bne @p2NotLeft
-001141r 2  A5 48          lda P2_NEXT_DIR
-001143r 2  C9 03          cmp #DIR_RIGHT
-001145r 2  F0 43          beq @p2Done
-001147r 2               @p2NotLeft:
-001147r 2  A5 47          lda P2_DIR
-001149r 2  C9 03          cmp #DIR_RIGHT
-00114Br 2  D0 06          bne @p2Apply
-00114Dr 2  A5 48          lda P2_NEXT_DIR
-00114Fr 2  C9 02          cmp #DIR_LEFT
-001151r 2  F0 37          beq @p2Done
-001153r 2               @p2Apply:
-001153r 2                 ; Same opponent-proximity scan as P1 -- see the comment there. Checks
-001153r 2                 ; P1_OWN_BUF instead, since P1 is the "other trail" from P2's side.
-001153r 2  A5 48          lda P2_NEXT_DIR
-001155r 2  C9 00          cmp #DIR_UP
-001157r 2  F0 09          beq @p2CheckSafety
-001159r 2  C9 01          cmp #DIR_DOWN
-00115Br 2  F0 05          beq @p2CheckSafety
-00115Dr 2  85 47          sta P2_DIR
-00115Fr 2  4C rr rr       jmp @p2Done
-001162r 2               @p2CheckSafety:
-001162r 2  A5 45          lda P2_X
-001164r 2  85 77          sta SCAN_TMP2
-001166r 2  A5 46          lda P2_Y
-001168r 2  85 55          sta SCAN_TMP
-00116Ar 2  A9 00          lda #<P1_OWN_BUF
-00116Cr 2  85 72          sta FONT_PTR
-00116Er 2  A9 50          lda #>P1_OWN_BUF
-001170r 2  85 73          sta FONT_PTR+1
-001172r 2  A5 48          lda P2_NEXT_DIR
-001174r 2  20 rr rr       jsr PathClearOfOpponent
-001177r 2  90 07          bcc @p2CheckAlign
-001179r 2  A5 48          lda P2_NEXT_DIR
-00117Br 2  85 47          sta P2_DIR
-00117Dr 2  4C rr rr       jmp @p2Done
-001180r 2               @p2CheckAlign:
-001180r 2  A5 45          lda P2_X
-001182r 2  29 07          and #7
-001184r 2  D0 04          bne @p2Done
-001186r 2  A5 48          lda P2_NEXT_DIR
-001188r 2  85 47          sta P2_DIR
-00118Ar 2               @p2Done:
-00118Ar 2  60             rts
-00118Br 2               
-00118Br 2               ; -----------------------------------------------------------------------------
-00118Br 2               ; PathClearOfOpponent -- scans a vertical strip (fixed column, from the
-00118Br 2               ; mover's current row out to the arena wall in the direction it's about
-00118Br 2               ; to turn) for any row where the opponent already owns part of that
-00118Br 2               ; row's shared color byte. See the comment in ApplyRequestedTurns for
-00118Br 2               ; why this exists: the old check only looked at the mover's current row,
-00118Br 2               ; blind to the same opponent trail sitting one row further down the
-00118Br 2               ; column the turn is about to travel through for potentially many rows.
-00118Br 2               ;
-00118Br 2               ; In:  SCAN_TMP2 = column (X), SCAN_TMP = starting row (Y, mover's
-00118Br 2               ;      current row), A = DIR_UP or DIR_DOWN (the heading being turned
-00118Br 2               ;      onto)
-00118Br 2               ;      FONT_PTR/FONT_PTR+1 = opponent's *_OWN_BUF base address, reused
-00118Br 2               ;      here as a plain input pointer -- DrawChar, its only other user,
-00118Br 2               ;      never runs during a gameplay tick (see TickPlaying), so there's
-00118Br 2               ;      nothing to clobber
-00118Br 2               ; Out: carry set = whole strip clear (turn is safe right now); carry
-00118Br 2               ;      clear = opponent already owns part of some row in the strip
-00118Br 2               ;      (caller falls back to the existing alignment gate)
-00118Br 2               ; Clobbers: A, X, Y, SCAN_TMP, WORK_PTR, OFFSET_LO/HI, NUM_TMP,
-00118Br 2               ;           AI_TEST_X/AI_TEST_Y (all via ComputePixelAddress)
-00118Br 2               ; -----------------------------------------------------------------------------
-00118Br 2               PathClearOfOpponent:
-00118Br 2  C9 00          cmp #DIR_UP
-00118Dr 2  F0 24          beq @upLoop
-00118Fr 2               @downLoop:
-00118Fr 2  A5 55          lda SCAN_TMP
-001191r 2  A6 77          ldx SCAN_TMP2
-001193r 2  20 rr rr       jsr ComputePixelAddress
-001196r 2  A5 50          lda OFFSET_LO
-001198r 2  18             clc
-001199r 2  65 72          adc FONT_PTR
-00119Br 2  85 52          sta WORK_PTR
-00119Dr 2  A5 51          lda OFFSET_HI
-00119Fr 2  65 73          adc FONT_PTR+1
-0011A1r 2  85 53          sta WORK_PTR+1
-0011A3r 2  A0 00          ldy #0
-0011A5r 2  B1 52          lda (WORK_PTR),y
-0011A7r 2  D0 2E          bne @hit
-0011A9r 2  A5 55          lda SCAN_TMP
-0011ABr 2  C9 BF          cmp #191
-0011ADr 2  F0 26          beq @clear
-0011AFr 2  E6 55          inc SCAN_TMP
-0011B1r 2  80 DC          bra @downLoop
-0011B3r 2               @upLoop:
-0011B3r 2  A5 55          lda SCAN_TMP
-0011B5r 2  A6 77          ldx SCAN_TMP2
-0011B7r 2  20 rr rr       jsr ComputePixelAddress
-0011BAr 2  A5 50          lda OFFSET_LO
-0011BCr 2  18             clc
-0011BDr 2  65 72          adc FONT_PTR
-0011BFr 2  85 52          sta WORK_PTR
-0011C1r 2  A5 51          lda OFFSET_HI
-0011C3r 2  65 73          adc FONT_PTR+1
-0011C5r 2  85 53          sta WORK_PTR+1
-0011C7r 2  A0 00          ldy #0
-0011C9r 2  B1 52          lda (WORK_PTR),y
-0011CBr 2  D0 0A          bne @hit
-0011CDr 2  A5 55          lda SCAN_TMP
-0011CFr 2  F0 04          beq @clear
-0011D1r 2  C6 55          dec SCAN_TMP
-0011D3r 2  80 DE          bra @upLoop
-0011D5r 2               @clear:
-0011D5r 2  38             sec
+001060r 2  54 52 41 49    .byte "TRAIL DUEL",0
+001064r 2  4C 20 44 55  
+001068r 2  45 4C 00     
+00106Br 2               
+00106Br 2               TitleLine4:
+00106Br 2  41 3A 20 53    .byte "A: START",0
+00106Fr 2  54 41 52 54  
+001073r 2  00           
+001074r 2               
+001074r 2               WinnerP1:
+001074r 2  50 4C 41 59    .byte "PLAYER 1 WINS",0
+001078r 2  45 52 20 31  
+00107Cr 2  20 57 49 4E  
+001082r 2               
+001082r 2               WinnerP2:
+001082r 2  50 4C 41 59    .byte "PLAYER 2 WINS",0
+001086r 2  45 52 20 32  
+00108Ar 2  20 57 49 4E  
+001090r 2               
+001090r 2               WinnerDraw:
+001090r 2  44 4F 55 42    .byte "DOUBLE CRASH",0
+001094r 2  4C 45 20 43  
+001098r 2  52 41 53 48  
+00109Dr 2               
+00109Dr 2               ModeLabel:
+00109Dr 2  4D 4F 44 45    .byte "MODE:",0
+0010A1r 2  3A 00        
+0010A3r 2               
+0010A3r 2               ModeSuffix1P:
+0010A3r 2  20 31 50 00    .byte " 1P",0
+0010A7r 2               
+0010A7r 2               ModeSuffix2P:
+0010A7r 2  20 32 50 00    .byte " 2P",0
+0010ABr 2               
+0010ABr 2               P1ColorLabel:
+0010ABr 2  50 31 3A 00    .byte "P1:",0
+0010AFr 2               
+0010AFr 2               P2ColorLabel:
+0010AFr 2  50 32 3A 00    .byte "P2:",0
+0010B3r 2               
+0010B3r 2               ; One saturated, vivid shade per hue -- rendered every candidate shade to
+0010B3r 2               ; the screen and looked at them side by side rather than going by name.
+0010B3r 2               ; Result: for red and yellow specifically, the "light" tier is the pastel
+0010B3r 2               ; one (salmon, pale khaki) and the "medium"/"dark" tier is the more vivid,
+0010B3r 2               ; saturated look (true red, golden yellow) -- backwards from what the
+0010B3r 2               ; names suggest. Blue's the exception: LT_BLUE reads as a rich periwinkle,
+0010B3r 2               ; not pastel, so it stays over DK_BLUE. Green only offers MED_GREEN as the
+0010B3r 2               ; vivid pick over the minty LT_GREEN. CYAN and MAGENTA only come in one
+0010B3r 2               ; (already vivid) shade. GRAY rounds it out as a neutral -- WHITE was
+0010B3r 2               ; considered too, but it's close enough to GRAY to not read as a distinct
+0010B3r 2               ; option, and would've meant the lead pixel/head sprite (both hardcoded
+0010B3r 2               ; white) blending into that one trail color instead of standing out.
+0010B3r 2               TrailFgColorTable:
+0010B3r 2  08 0A 02 07    .byte TMS_MED_RED, TMS_DK_YELLOW, TMS_MED_GREEN, TMS_CYAN, TMS_LT_BLUE, TMS_MAGENTA, TMS_GRAY
+0010B7r 2  05 0D 0E     
+0010BAr 2               
+0010BAr 2               ApplyRequestedTurns:
+0010BAr 2                 ; P1: reject exact 180 reversals.
+0010BAr 2  A5 42          lda P1_DIR
+0010BCr 2  C9 00          cmp #DIR_UP
+0010BEr 2  D0 06          bne @p1NotUp
+0010C0r 2  A5 43          lda P1_NEXT_DIR
+0010C2r 2  C9 01          cmp #DIR_DOWN
+0010C4r 2  F0 5B          beq @p1Done
+0010C6r 2               @p1NotUp:
+0010C6r 2  A5 42          lda P1_DIR
+0010C8r 2  C9 01          cmp #DIR_DOWN
+0010CAr 2  D0 06          bne @p1NotDown
+0010CCr 2  A5 43          lda P1_NEXT_DIR
+0010CEr 2  C9 00          cmp #DIR_UP
+0010D0r 2  F0 4F          beq @p1Done
+0010D2r 2               @p1NotDown:
+0010D2r 2  A5 42          lda P1_DIR
+0010D4r 2  C9 02          cmp #DIR_LEFT
+0010D6r 2  D0 06          bne @p1NotLeft
+0010D8r 2  A5 43          lda P1_NEXT_DIR
+0010DAr 2  C9 03          cmp #DIR_RIGHT
+0010DCr 2  F0 43          beq @p1Done
+0010DEr 2               @p1NotLeft:
+0010DEr 2  A5 42          lda P1_DIR
+0010E0r 2  C9 03          cmp #DIR_RIGHT
+0010E2r 2  D0 06          bne @p1Apply
+0010E4r 2  A5 43          lda P1_NEXT_DIR
+0010E6r 2  C9 02          cmp #DIR_LEFT
+0010E8r 2  F0 37          beq @p1Done
+0010EAr 2               @p1Apply:
+0010EAr 2                 ; Turning onto a vertical heading (UP/DOWN) is only gated by X being
+0010EAr 2                 ; byte-aligned (a multiple of 8, matching the TMS9918 color table's own
+0010EAr 2                 ; 8-pixel granularity) when P2 actually has a claim somewhere in the
+0010EAr 2                 ; column of color bytes this turn is about to travel through -- see
+0010EAr 2                 ; the big comment on PixelSetP1Trail for why two different-colored
+0010EAr 2                 ; trails sharing part of one 8-pixel-wide color byte can never both
+0010EAr 2                 ; render correctly, full stop, on this hardware. That's only a real
+0010EAr 2                 ; risk when the other trail is somewhere nearby; the overwhelming
+0010EAr 2                 ; majority of turns happen nowhere near P2's trail at all, and gating
+0010EAr 2                 ; every single one of those unconditionally meant instant turns almost
+0010EAr 2                 ; never happened -- up to 7 ticks (560ms at this game's 80ms tick) of
+0010EAr 2                 ; input lag on turns that were never actually in any danger of a color
+0010EAr 2                 ; clash. PathClearOfOpponent scans P2_OWN_BUF down the whole column
+0010EAr 2                 ; this run is about to travel, from my current row out to the wall --
+0010EAr 2                 ; not just my current row, which used to miss a P2 trail sitting
+0010EAr 2                 ; further down the same column and let the turn through anyway, only
+0010EAr 2                 ; to bleed once the run reached it. Empty the whole way means turning
+0010EAr 2                 ; right now is completely safe, so it takes effect immediately, same
+0010EAr 2                 ; as it always did before any of this. Only when P2 already claims
+0010EAr 2                 ; some row along that column does the alignment gate kick in, exactly
+0010EAr 2                 ; as before. (The one case this still can't see is a P2 trail that
+0010EAr 2                 ; hasn't reached that column yet AT ALL -- there's nothing in memory
+0010EAr 2                 ; yet to scan for a move P2 hasn't made. That residual case falls back
+0010EAr 2                 ; to the majority-vote/white-clash system in PixelSetP1Trail, same as
+0010EAr 2                 ; any other near-miss.)
+0010EAr 2  A5 43          lda P1_NEXT_DIR
+0010ECr 2  C9 00          cmp #DIR_UP
+0010EEr 2  F0 09          beq @p1CheckSafety
+0010F0r 2  C9 01          cmp #DIR_DOWN
+0010F2r 2  F0 05          beq @p1CheckSafety
+0010F4r 2  85 42          sta P1_DIR
+0010F6r 2  4C rr rr       jmp @p1Done
+0010F9r 2               @p1CheckSafety:
+0010F9r 2  A5 40          lda P1_X
+0010FBr 2  85 77          sta SCAN_TMP2
+0010FDr 2  A5 41          lda P1_Y
+0010FFr 2  85 55          sta SCAN_TMP
+001101r 2  A9 00          lda #<P2_OWN_BUF
+001103r 2  85 72          sta FONT_PTR
+001105r 2  A9 68          lda #>P2_OWN_BUF
+001107r 2  85 73          sta FONT_PTR+1
+001109r 2  A5 43          lda P1_NEXT_DIR
+00110Br 2  20 rr rr       jsr PathClearOfOpponent
+00110Er 2  90 07          bcc @p1CheckAlign
+001110r 2  A5 43          lda P1_NEXT_DIR
+001112r 2  85 42          sta P1_DIR
+001114r 2  4C rr rr       jmp @p1Done
+001117r 2               @p1CheckAlign:
+001117r 2  A5 40          lda P1_X
+001119r 2  29 07          and #7
+00111Br 2  D0 04          bne @p1Done
+00111Dr 2  A5 43          lda P1_NEXT_DIR
+00111Fr 2  85 42          sta P1_DIR
+001121r 2               @p1Done:
+001121r 2               
+001121r 2                 ; P2: same reversal rule.
+001121r 2  A5 47          lda P2_DIR
+001123r 2  C9 00          cmp #DIR_UP
+001125r 2  D0 06          bne @p2NotUp
+001127r 2  A5 48          lda P2_NEXT_DIR
+001129r 2  C9 01          cmp #DIR_DOWN
+00112Br 2  F0 5B          beq @p2Done
+00112Dr 2               @p2NotUp:
+00112Dr 2  A5 47          lda P2_DIR
+00112Fr 2  C9 01          cmp #DIR_DOWN
+001131r 2  D0 06          bne @p2NotDown
+001133r 2  A5 48          lda P2_NEXT_DIR
+001135r 2  C9 00          cmp #DIR_UP
+001137r 2  F0 4F          beq @p2Done
+001139r 2               @p2NotDown:
+001139r 2  A5 47          lda P2_DIR
+00113Br 2  C9 02          cmp #DIR_LEFT
+00113Dr 2  D0 06          bne @p2NotLeft
+00113Fr 2  A5 48          lda P2_NEXT_DIR
+001141r 2  C9 03          cmp #DIR_RIGHT
+001143r 2  F0 43          beq @p2Done
+001145r 2               @p2NotLeft:
+001145r 2  A5 47          lda P2_DIR
+001147r 2  C9 03          cmp #DIR_RIGHT
+001149r 2  D0 06          bne @p2Apply
+00114Br 2  A5 48          lda P2_NEXT_DIR
+00114Dr 2  C9 02          cmp #DIR_LEFT
+00114Fr 2  F0 37          beq @p2Done
+001151r 2               @p2Apply:
+001151r 2                 ; Same opponent-proximity scan as P1 -- see the comment there. Checks
+001151r 2                 ; P1_OWN_BUF instead, since P1 is the "other trail" from P2's side.
+001151r 2  A5 48          lda P2_NEXT_DIR
+001153r 2  C9 00          cmp #DIR_UP
+001155r 2  F0 09          beq @p2CheckSafety
+001157r 2  C9 01          cmp #DIR_DOWN
+001159r 2  F0 05          beq @p2CheckSafety
+00115Br 2  85 47          sta P2_DIR
+00115Dr 2  4C rr rr       jmp @p2Done
+001160r 2               @p2CheckSafety:
+001160r 2  A5 45          lda P2_X
+001162r 2  85 77          sta SCAN_TMP2
+001164r 2  A5 46          lda P2_Y
+001166r 2  85 55          sta SCAN_TMP
+001168r 2  A9 00          lda #<P1_OWN_BUF
+00116Ar 2  85 72          sta FONT_PTR
+00116Cr 2  A9 50          lda #>P1_OWN_BUF
+00116Er 2  85 73          sta FONT_PTR+1
+001170r 2  A5 48          lda P2_NEXT_DIR
+001172r 2  20 rr rr       jsr PathClearOfOpponent
+001175r 2  90 07          bcc @p2CheckAlign
+001177r 2  A5 48          lda P2_NEXT_DIR
+001179r 2  85 47          sta P2_DIR
+00117Br 2  4C rr rr       jmp @p2Done
+00117Er 2               @p2CheckAlign:
+00117Er 2  A5 45          lda P2_X
+001180r 2  29 07          and #7
+001182r 2  D0 04          bne @p2Done
+001184r 2  A5 48          lda P2_NEXT_DIR
+001186r 2  85 47          sta P2_DIR
+001188r 2               @p2Done:
+001188r 2  60             rts
+001189r 2               
+001189r 2               ; -----------------------------------------------------------------------------
+001189r 2               ; PathClearOfOpponent -- scans a vertical strip (fixed column, from the
+001189r 2               ; mover's current row out to the arena wall in the direction it's about
+001189r 2               ; to turn) for any row where the opponent already owns part of that
+001189r 2               ; row's shared color byte. See the comment in ApplyRequestedTurns for
+001189r 2               ; why this exists: the old check only looked at the mover's current row,
+001189r 2               ; blind to the same opponent trail sitting one row further down the
+001189r 2               ; column the turn is about to travel through for potentially many rows.
+001189r 2               ;
+001189r 2               ; In:  SCAN_TMP2 = column (X), SCAN_TMP = starting row (Y, mover's
+001189r 2               ;      current row), A = DIR_UP or DIR_DOWN (the heading being turned
+001189r 2               ;      onto)
+001189r 2               ;      FONT_PTR/FONT_PTR+1 = opponent's *_OWN_BUF base address, reused
+001189r 2               ;      here as a plain input pointer -- DrawChar, its only other user,
+001189r 2               ;      never runs during a gameplay tick (see TickPlaying), so there's
+001189r 2               ;      nothing to clobber
+001189r 2               ; Out: carry set = whole strip clear (turn is safe right now); carry
+001189r 2               ;      clear = opponent already owns part of some row in the strip
+001189r 2               ;      (caller falls back to the existing alignment gate)
+001189r 2               ; Clobbers: A, X, Y, SCAN_TMP, WORK_PTR, OFFSET_LO/HI, NUM_TMP,
+001189r 2               ;           AI_TEST_X/AI_TEST_Y (all via ComputePixelAddress)
+001189r 2               ; -----------------------------------------------------------------------------
+001189r 2               PathClearOfOpponent:
+001189r 2  C9 00          cmp #DIR_UP
+00118Br 2  F0 24          beq @upLoop
+00118Dr 2               @downLoop:
+00118Dr 2  A5 55          lda SCAN_TMP
+00118Fr 2  A6 77          ldx SCAN_TMP2
+001191r 2  20 rr rr       jsr ComputePixelAddress
+001194r 2  A5 50          lda OFFSET_LO
+001196r 2  18             clc
+001197r 2  65 72          adc FONT_PTR
+001199r 2  85 52          sta WORK_PTR
+00119Br 2  A5 51          lda OFFSET_HI
+00119Dr 2  65 73          adc FONT_PTR+1
+00119Fr 2  85 53          sta WORK_PTR+1
+0011A1r 2  A0 00          ldy #0
+0011A3r 2  B1 52          lda (WORK_PTR),y
+0011A5r 2  D0 2E          bne @hit
+0011A7r 2  A5 55          lda SCAN_TMP
+0011A9r 2  C9 BF          cmp #191
+0011ABr 2  F0 26          beq @clear
+0011ADr 2  E6 55          inc SCAN_TMP
+0011AFr 2  80 DC          bra @downLoop
+0011B1r 2               @upLoop:
+0011B1r 2  A5 55          lda SCAN_TMP
+0011B3r 2  A6 77          ldx SCAN_TMP2
+0011B5r 2  20 rr rr       jsr ComputePixelAddress
+0011B8r 2  A5 50          lda OFFSET_LO
+0011BAr 2  18             clc
+0011BBr 2  65 72          adc FONT_PTR
+0011BDr 2  85 52          sta WORK_PTR
+0011BFr 2  A5 51          lda OFFSET_HI
+0011C1r 2  65 73          adc FONT_PTR+1
+0011C3r 2  85 53          sta WORK_PTR+1
+0011C5r 2  A0 00          ldy #0
+0011C7r 2  B1 52          lda (WORK_PTR),y
+0011C9r 2  D0 0A          bne @hit
+0011CBr 2  A5 55          lda SCAN_TMP
+0011CDr 2  F0 04          beq @clear
+0011CFr 2  C6 55          dec SCAN_TMP
+0011D1r 2  80 DE          bra @upLoop
+0011D3r 2               @clear:
+0011D3r 2  38             sec
+0011D4r 2  60             rts
+0011D5r 2               @hit:
+0011D5r 2  18             clc
 0011D6r 2  60             rts
-0011D7r 2               @hit:
-0011D7r 2  18             clc
-0011D8r 2  60             rts
-0011D9r 2               
-0011D9r 2               ; -----------------------------------------------------------------------------
-0011D9r 2               ; ComputeP2LeftTurn / ComputeP2RightTurn -- the 90-degree turn-candidate
-0011D9r 2               ; tables, factored out so ComputeP2AIDirection can try them in either
-0011D9r 2               ; order (see the coin flip there). In: P2_DIR. Out: A = the candidate
-0011D9r 2               ; direction for that turn from the current heading.
-0011D9r 2               ;
-0011D9r 2               ; Each case returns immediately after its lda instead of falling through
-0011D9r 2               ; to a shared exit via bne. The old inline right-turn table used that
-0011D9r 2               ; fall-through idiom and it broke for DIR_UP, which is 0: "lda #DIR_UP /
-0011D9r 2               ; bne @rightReady" never branches when A is 0, so the LEFT-heading case
-0011D9r 2               ; silently fell through into DIR_DOWN instead of DIR_UP -- P2 never even
-0011D9r 2               ; tried its "up" escape when heading left. Returning per-case avoids that
-0011D9r 2               ; class of bug rather than reproducing it here.
-0011D9r 2               ; -----------------------------------------------------------------------------
-0011D9r 2               ComputeP2LeftTurn:
-0011D9r 2  A5 47          lda P2_DIR
-0011DBr 2  C9 00          cmp #DIR_UP
-0011DDr 2  D0 03          bne @lNotUp
-0011DFr 2  A9 02          lda #DIR_LEFT
-0011E1r 2  60             rts
-0011E2r 2               @lNotUp:
-0011E2r 2  A5 47          lda P2_DIR
-0011E4r 2  C9 01          cmp #DIR_DOWN
-0011E6r 2  D0 03          bne @lNotDown
-0011E8r 2  A9 03          lda #DIR_RIGHT
-0011EAr 2  60             rts
-0011EBr 2               @lNotDown:
-0011EBr 2  A5 47          lda P2_DIR
-0011EDr 2  C9 02          cmp #DIR_LEFT
-0011EFr 2  D0 03          bne @lNotLeft
-0011F1r 2  A9 01          lda #DIR_DOWN
-0011F3r 2  60             rts
-0011F4r 2               @lNotLeft:
-0011F4r 2  A9 00          lda #DIR_UP
-0011F6r 2  60             rts
-0011F7r 2               
-0011F7r 2               ComputeP2RightTurn:
-0011F7r 2  A5 47          lda P2_DIR
-0011F9r 2  C9 00          cmp #DIR_UP
-0011FBr 2  D0 03          bne @rNotUp
-0011FDr 2  A9 03          lda #DIR_RIGHT
-0011FFr 2  60             rts
-001200r 2               @rNotUp:
-001200r 2  A5 47          lda P2_DIR
-001202r 2  C9 01          cmp #DIR_DOWN
-001204r 2  D0 03          bne @rNotDown
-001206r 2  A9 02          lda #DIR_LEFT
-001208r 2  60             rts
-001209r 2               @rNotDown:
-001209r 2  A5 47          lda P2_DIR
-00120Br 2  C9 02          cmp #DIR_LEFT
-00120Dr 2  D0 03          bne @rNotLeft
-00120Fr 2  A9 00          lda #DIR_UP
-001211r 2  60             rts
-001212r 2               @rNotLeft:
-001212r 2  A9 01          lda #DIR_DOWN
-001214r 2  60             rts
-001215r 2               
-001215r 2               ; -----------------------------------------------------------------------------
-001215r 2               ; DirTowardP1 -- which of the two directions perpendicular to P2's
-001215r 2               ; CURRENT heading closes the distance to P1 on the axis that matters.
-001215r 2               ; P2_DIR horizontal -> compares Y (result is DIR_UP/DIR_DOWN). P2_DIR
-001215r 2               ; vertical -> compares X (result is DIR_LEFT/DIR_RIGHT). Out: A = that
-001215r 2               ; direction, or $FF if P1 is exactly level with P2 on that axis (no
-001215r 2               ; preference either way).
-001215r 2               ; -----------------------------------------------------------------------------
-001215r 2               DirTowardP1:
-001215r 2  A5 47          lda P2_DIR
-001217r 2  C9 02          cmp #DIR_LEFT
-001219r 2  F0 12          beq @axisIsY
-00121Br 2  C9 03          cmp #DIR_RIGHT
-00121Dr 2  F0 0E          beq @axisIsY
-00121Fr 2               
-00121Fr 2                 ; P2 currently vertical -- compare X.
-00121Fr 2  A5 40          lda P1_X
-001221r 2  C5 45          cmp P2_X
-001223r 2  F0 16          beq @tied
-001225r 2  90 03          bcc @wantLeft
-001227r 2  A9 03          lda #DIR_RIGHT
-001229r 2  60             rts
-00122Ar 2               @wantLeft:
-00122Ar 2  A9 02          lda #DIR_LEFT
-00122Cr 2  60             rts
-00122Dr 2               
-00122Dr 2               @axisIsY:
-00122Dr 2                 ; P2 currently horizontal -- compare Y.
-00122Dr 2  A5 41          lda P1_Y
-00122Fr 2  C5 46          cmp P2_Y
-001231r 2  F0 08          beq @tied
-001233r 2  90 03          bcc @wantUp
-001235r 2  A9 01          lda #DIR_DOWN
-001237r 2  60             rts
-001238r 2               @wantUp:
-001238r 2  A9 00          lda #DIR_UP
-00123Ar 2  60             rts
-00123Br 2               
-00123Br 2               @tied:
-00123Br 2  A9 FF          lda #$FF
-00123Dr 2  60             rts
-00123Er 2               
-00123Er 2               ; -----------------------------------------------------------------------------
-00123Er 2               ; ComputeP2AIDirection -- picks P2_NEXT_DIR from three candidates:
-00123Er 2               ; continue straight, turn left, turn right.
-00123Er 2               ;
-00123Er 2               ; Continuing straight is preferred whenever it's safe -- but not
-00123Er 2               ; absolutely: about 1 time in 16, even a safe straight run gets
-00123Er 2               ; second-guessed and a turn is looked for anyway. Without this, P2 was a
-00123Er 2               ; pure wall-follower that never changed course unless a wall forced it
-00123Er 2               ; to, which is exactly what made it feel predictable and never actually
-00123Er 2               ; came at P1 -- it only ever reacted to geometry, never to the other
-00123Er 2               ; player.
-00123Er 2               ;
-00123Er 2               ; When a turn IS being considered (forced or not), left and right used
-00123Er 2               ; to be a flat coin flip. Now DirTowardP1 picks whichever turn actually
-00123Er 2               ; closes the distance to P1 on the relevant axis, and that's preferred
-00123Er 2               ; about 3 times out of 4 -- not always, since an AI that beelines for
-00123Er 2               ; the player with zero variance is its own kind of predictable, and the
-00123Er 2               ; remaining 1-in-4 (or ties, where neither side is objectively better)
-00123Er 2               ; falls back to the old plain coin flip.
-00123Er 2               ; -----------------------------------------------------------------------------
-00123Er 2               ComputeP2AIDirection:
-00123Er 2  A5 47          lda P2_DIR
-001240r 2  85 5A          sta AI_DIR_TMP
-001242r 2  20 rr rr       jsr IsDirectionSafeP2
-001245r 2  90 07          bcc @pickTurn
-001247r 2               
-001247r 2                 ; Continuing straight is safe -- usually just take it, but roll a
-001247r 2                 ; small chance to look for a turn anyway.
-001247r 2  20 rr rr       jsr AdvanceRng
-00124Ar 2  29 0F          and #$0F
-00124Cr 2  D0 52          bne @keepCurrent
-00124Er 2               
-00124Er 2               @pickTurn:
-00124Er 2  20 rr rr       jsr DirTowardP1
-001251r 2  85 81          sta AI_PREFERRED_DIR
-001253r 2  C9 FF          cmp #$FF
-001255r 2  F0 13          beq @coinFlip
-001257r 2  20 rr rr       jsr AdvanceRng
-00125Ar 2  29 03          and #3
-00125Cr 2  C9 03          cmp #3
-00125Er 2  F0 0A          beq @coinFlip
-001260r 2  20 rr rr       jsr ComputeP2LeftTurn
-001263r 2  C5 81          cmp AI_PREFERRED_DIR
-001265r 2  F0 09          beq @tryLeftFirst
-001267r 2  4C rr rr       jmp @tryRightFirst
-00126Ar 2               
-00126Ar 2               @coinFlip:
-00126Ar 2  20 rr rr       jsr AdvanceRng
-00126Dr 2  4A             lsr a
-00126Er 2  B0 17          bcs @tryRightFirst
-001270r 2               
-001270r 2               @tryLeftFirst:
-001270r 2  20 rr rr       jsr ComputeP2LeftTurn
-001273r 2  85 5A          sta AI_DIR_TMP
-001275r 2  20 rr rr       jsr IsDirectionSafeP2
-001278r 2  B0 2B          bcs @useAiDir
-00127Ar 2  20 rr rr       jsr ComputeP2RightTurn
-00127Dr 2  85 5A          sta AI_DIR_TMP
-00127Fr 2  20 rr rr       jsr IsDirectionSafeP2
-001282r 2  B0 21          bcs @useAiDir
-001284r 2  4C rr rr       jmp @noSafeTurn
-001287r 2               
-001287r 2               @tryRightFirst:
-001287r 2  20 rr rr       jsr ComputeP2RightTurn
-00128Ar 2  85 5A          sta AI_DIR_TMP
-00128Cr 2  20 rr rr       jsr IsDirectionSafeP2
-00128Fr 2  B0 14          bcs @useAiDir
-001291r 2  20 rr rr       jsr ComputeP2LeftTurn
-001294r 2  85 5A          sta AI_DIR_TMP
-001296r 2  20 rr rr       jsr IsDirectionSafeP2
-001299r 2  B0 0A          bcs @useAiDir
-00129Br 2               
-00129Br 2               @noSafeTurn:
-00129Br 2                 ; No safe turn found: keep current.
-00129Br 2  A5 47          lda P2_DIR
-00129Dr 2  85 48          sta P2_NEXT_DIR
-00129Fr 2  60             rts
-0012A0r 2               
-0012A0r 2               @keepCurrent:
-0012A0r 2  A5 47          lda P2_DIR
-0012A2r 2  85 48          sta P2_NEXT_DIR
-0012A4r 2  60             rts
-0012A5r 2               
-0012A5r 2               @useAiDir:
-0012A5r 2  A5 5A          lda AI_DIR_TMP
-0012A7r 2  85 48          sta P2_NEXT_DIR
-0012A9r 2  60             rts
-0012AAr 2               
-0012AAr 2               ; -----------------------------------------------------------------------------
-0012AAr 2               ; IsDirectionSafeP2 - In: AI_DIR_TMP = candidate direction, using current
-0012AAr 2               ; P2_X/P2_Y. Out: carry set if safe, clear if not.
-0012AAr 2               ; A candidate turn from a horizontal heading onto UP/DOWN doesn't
-0012AAr 2               ; necessarily take effect next tick the way a plain 1-step lookahead
-0012AAr 2               ; assumes -- ApplyRequestedTurns holds a turn onto a vertical heading
-0012AAr 2               ; until P2_X is grid-aligned (see the comment there), so P2 is committed
-0012AAr 2               ; to continuing in its CURRENT direction for however many pixels remain
-0012AAr 2               ; until that happens, not just the one step this used to check. Confirmed
-0012AAr 2               ; via the debugger: the AI picked UP as "safe" one pixel from the border
-0012AAr 2               ; while off-grid, the turn was held, and P2 drove straight into the wall
-0012AAr 2               ; it had supposedly already decided to avoid. When the candidate is
-0012AAr 2               ; vertical and the current heading is horizontal, walk every pixel of
-0012AAr 2               ; that committed path first, then check the vertical step from wherever
-0012AAr 2               ; it actually lands -- that's the real distance to safety, not 1 pixel.
-0012AAr 2               ;
-0012AAr 2               ; Continuing straight while ALREADY horizontal gets the same treatment,
-0012AAr 2               ; for a different reason: ComputeP2AIDirection only looks for an escape
-0012AAr 2               ; once continuing straight is unsafe, and a plain 1-step check doesn't
-0012AAr 2               ; call that unsafe until the wall is the very next pixel -- by which
-0012AAr 2               ; point P2 has typically already sailed past whatever grid line would
-0012AAr 2               ; have let a turn through in time, and lands back off-grid with no room
-0012AAr 2               ; left for the delay above. Confirmed the same way: P2 ran straight
-0012AAr 2               ; through a fully aligned column with room to spare, reacted for the
-0012AAr 2               ; first time one pixel from the border, and had nowhere left to turn.
-0012AAr 2               ; Looking 8 pixels ahead here -- worst-case turn delay -- means the AI
-0012AAr 2               ; calls "continue" unsafe early enough that a gated turn still has a
-0012AAr 2               ; grid line to reach before whatever it saw coming actually arrives.
-0012AAr 2               ;
-0012AAr 2               ; Turning between two directions on an axis switch that ISN'T gated
-0012AAr 2               ; (vertical-current -> horizontal-candidate, which always takes effect
-0012AAr 2               ; immediately) keeps the plain single-step check -- there's no delay to
-0012AAr 2               ; plan around there.
-0012AAr 2               ;
-0012AAr 2               ; Continuing straight while ALREADY vertical gets the same 8-pixel scan
-0012AAr 2               ; as the horizontal case, for the same reason: a plain 1-step check
-0012AAr 2               ; doesn't call the run unsafe until the wall is the very next pixel,
-0012AAr 2               ; which reads as a last-instant twitch compared to the horizontal case's
-0012AAr 2               ; visibly-early turn -- same underlying AI, inconsistent reaction
-0012AAr 2               ; distance depending purely on which axis it happened to be moving on.
-0012AAr 2               ; This isn't a gating-delay issue the way the horizontal case was (a
-0012AAr 2               ; turn OFF of vertical onto horizontal is never gated, so the 1-step
-0012AAr 2               ; check for the two turn candidates below is already exactly correct
-0012AAr 2               ; and untouched) -- it's purely about giving the AI the same look-ahead
-0012AAr 2               ; on both axes so its behavior doesn't visibly change shape depending on
-0012AAr 2               ; which way it's facing.
-0012AAr 2               ; -----------------------------------------------------------------------------
-0012AAr 2               IsDirectionSafeP2:
-0012AAr 2  A5 47          lda P2_DIR
-0012ACr 2  C9 02          cmp #DIR_LEFT
-0012AEr 2  F0 10          beq @currentHorizontal
-0012B0r 2  C9 03          cmp #DIR_RIGHT
-0012B2r 2  F0 0C          beq @currentHorizontal
-0012B4r 2               
-0012B4r 2                 ; Currently vertical (UP/DOWN). The two turn candidates (onto
-0012B4r 2                 ; LEFT/RIGHT) fall through to @simple's plain 1-step check, same as
-0012B4r 2                 ; always -- see the comment above for why that's still exactly right.
-0012B4r 2                 ; Continuing straight (AI_DIR_TMP == P2_DIR) gets the extended scan.
-0012B4r 2  A5 5A          lda AI_DIR_TMP
-0012B6r 2  C5 47          cmp P2_DIR
-0012B8r 2  D0 03          bne @notContinueV
-0012BAr 2  4C rr rr       jmp @continueLookaheadV
-0012BDr 2               @notContinueV:
-0012BDr 2  4C rr rr       jmp @simple
-0012C0r 2               
-0012C0r 2               @currentHorizontal:
-0012C0r 2  A5 5A          lda AI_DIR_TMP
-0012C2r 2  C9 00          cmp #DIR_UP
-0012C4r 2  F0 2F          beq @gated
-0012C6r 2  C9 01          cmp #DIR_DOWN
-0012C8r 2  F0 2B          beq @gated
-0012CAr 2  80 00          bra @continueLookahead
-0012CCr 2               
-0012CCr 2               @continueLookahead:
-0012CCr 2                 ; AI_DIR_TMP must equal P2_DIR here (horizontal continue) -- turning
-0012CCr 2                 ; onto the opposite horizontal direction is a reversal and never a
-0012CCr 2                 ; candidate ComputeP2AIDirection generates.
-0012CCr 2  A5 45          lda P2_X
-0012CEr 2  85 5B          sta AI_TEST_X
-0012D0r 2  A5 46          lda P2_Y
-0012D2r 2  85 5C          sta AI_TEST_Y
-0012D4r 2  A9 08          lda #8
-0012D6r 2  85 77          sta SCAN_TMP2
-0012D8r 2               @clLoop:
-0012D8r 2  A5 47          lda P2_DIR
-0012DAr 2  C9 03          cmp #DIR_RIGHT
-0012DCr 2  D0 04          bne @clDec
-0012DEr 2  E6 5B          inc AI_TEST_X
-0012E0r 2  80 02          bra @clCheck
-0012E2r 2               @clDec:
-0012E2r 2  C6 5B          dec AI_TEST_X
-0012E4r 2               @clCheck:
-0012E4r 2  A5 5C          lda AI_TEST_Y
-0012E6r 2  A6 5B          ldx AI_TEST_X
-0012E8r 2  20 rr rr       jsr PixelIsSet
-0012EBr 2  D0 06          bne @clBlocked
-0012EDr 2  C6 77          dec SCAN_TMP2
-0012EFr 2  D0 E7          bne @clLoop
-0012F1r 2  38             sec
+0011D7r 2               
+0011D7r 2               ; -----------------------------------------------------------------------------
+0011D7r 2               ; ComputeP2LeftTurn / ComputeP2RightTurn -- the 90-degree turn-candidate
+0011D7r 2               ; tables, factored out so ComputeP2AIDirection can try them in either
+0011D7r 2               ; order (see the coin flip there). In: P2_DIR. Out: A = the candidate
+0011D7r 2               ; direction for that turn from the current heading.
+0011D7r 2               ;
+0011D7r 2               ; Each case returns immediately after its lda instead of falling through
+0011D7r 2               ; to a shared exit via bne. The old inline right-turn table used that
+0011D7r 2               ; fall-through idiom and it broke for DIR_UP, which is 0: "lda #DIR_UP /
+0011D7r 2               ; bne @rightReady" never branches when A is 0, so the LEFT-heading case
+0011D7r 2               ; silently fell through into DIR_DOWN instead of DIR_UP -- P2 never even
+0011D7r 2               ; tried its "up" escape when heading left. Returning per-case avoids that
+0011D7r 2               ; class of bug rather than reproducing it here.
+0011D7r 2               ; -----------------------------------------------------------------------------
+0011D7r 2               ComputeP2LeftTurn:
+0011D7r 2  A5 47          lda P2_DIR
+0011D9r 2  C9 00          cmp #DIR_UP
+0011DBr 2  D0 03          bne @lNotUp
+0011DDr 2  A9 02          lda #DIR_LEFT
+0011DFr 2  60             rts
+0011E0r 2               @lNotUp:
+0011E0r 2  A5 47          lda P2_DIR
+0011E2r 2  C9 01          cmp #DIR_DOWN
+0011E4r 2  D0 03          bne @lNotDown
+0011E6r 2  A9 03          lda #DIR_RIGHT
+0011E8r 2  60             rts
+0011E9r 2               @lNotDown:
+0011E9r 2  A5 47          lda P2_DIR
+0011EBr 2  C9 02          cmp #DIR_LEFT
+0011EDr 2  D0 03          bne @lNotLeft
+0011EFr 2  A9 01          lda #DIR_DOWN
+0011F1r 2  60             rts
+0011F2r 2               @lNotLeft:
+0011F2r 2  A9 00          lda #DIR_UP
+0011F4r 2  60             rts
+0011F5r 2               
+0011F5r 2               ComputeP2RightTurn:
+0011F5r 2  A5 47          lda P2_DIR
+0011F7r 2  C9 00          cmp #DIR_UP
+0011F9r 2  D0 03          bne @rNotUp
+0011FBr 2  A9 03          lda #DIR_RIGHT
+0011FDr 2  60             rts
+0011FEr 2               @rNotUp:
+0011FEr 2  A5 47          lda P2_DIR
+001200r 2  C9 01          cmp #DIR_DOWN
+001202r 2  D0 03          bne @rNotDown
+001204r 2  A9 02          lda #DIR_LEFT
+001206r 2  60             rts
+001207r 2               @rNotDown:
+001207r 2  A5 47          lda P2_DIR
+001209r 2  C9 02          cmp #DIR_LEFT
+00120Br 2  D0 03          bne @rNotLeft
+00120Dr 2  A9 00          lda #DIR_UP
+00120Fr 2  60             rts
+001210r 2               @rNotLeft:
+001210r 2  A9 01          lda #DIR_DOWN
+001212r 2  60             rts
+001213r 2               
+001213r 2               ; -----------------------------------------------------------------------------
+001213r 2               ; DirTowardP1 -- which of the two directions perpendicular to P2's
+001213r 2               ; CURRENT heading closes the distance to P1 on the axis that matters.
+001213r 2               ; P2_DIR horizontal -> compares Y (result is DIR_UP/DIR_DOWN). P2_DIR
+001213r 2               ; vertical -> compares X (result is DIR_LEFT/DIR_RIGHT). Out: A = that
+001213r 2               ; direction, or $FF if P1 is exactly level with P2 on that axis (no
+001213r 2               ; preference either way).
+001213r 2               ; -----------------------------------------------------------------------------
+001213r 2               DirTowardP1:
+001213r 2  A5 47          lda P2_DIR
+001215r 2  C9 02          cmp #DIR_LEFT
+001217r 2  F0 12          beq @axisIsY
+001219r 2  C9 03          cmp #DIR_RIGHT
+00121Br 2  F0 0E          beq @axisIsY
+00121Dr 2               
+00121Dr 2                 ; P2 currently vertical -- compare X.
+00121Dr 2  A5 40          lda P1_X
+00121Fr 2  C5 45          cmp P2_X
+001221r 2  F0 16          beq @tied
+001223r 2  90 03          bcc @wantLeft
+001225r 2  A9 03          lda #DIR_RIGHT
+001227r 2  60             rts
+001228r 2               @wantLeft:
+001228r 2  A9 02          lda #DIR_LEFT
+00122Ar 2  60             rts
+00122Br 2               
+00122Br 2               @axisIsY:
+00122Br 2                 ; P2 currently horizontal -- compare Y.
+00122Br 2  A5 41          lda P1_Y
+00122Dr 2  C5 46          cmp P2_Y
+00122Fr 2  F0 08          beq @tied
+001231r 2  90 03          bcc @wantUp
+001233r 2  A9 01          lda #DIR_DOWN
+001235r 2  60             rts
+001236r 2               @wantUp:
+001236r 2  A9 00          lda #DIR_UP
+001238r 2  60             rts
+001239r 2               
+001239r 2               @tied:
+001239r 2  A9 FF          lda #$FF
+00123Br 2  60             rts
+00123Cr 2               
+00123Cr 2               ; -----------------------------------------------------------------------------
+00123Cr 2               ; ComputeP2AIDirection -- picks P2_NEXT_DIR from three candidates:
+00123Cr 2               ; continue straight, turn left, turn right.
+00123Cr 2               ;
+00123Cr 2               ; Continuing straight is preferred whenever it's safe -- but not
+00123Cr 2               ; absolutely: about 1 time in 16, even a safe straight run gets
+00123Cr 2               ; second-guessed and a turn is looked for anyway. Without this, P2 was a
+00123Cr 2               ; pure wall-follower that never changed course unless a wall forced it
+00123Cr 2               ; to, which is exactly what made it feel predictable and never actually
+00123Cr 2               ; came at P1 -- it only ever reacted to geometry, never to the other
+00123Cr 2               ; player.
+00123Cr 2               ;
+00123Cr 2               ; When a turn IS being considered (forced or not), left and right used
+00123Cr 2               ; to be a flat coin flip. Now DirTowardP1 picks whichever turn actually
+00123Cr 2               ; closes the distance to P1 on the relevant axis, and that's preferred
+00123Cr 2               ; about 3 times out of 4 -- not always, since an AI that beelines for
+00123Cr 2               ; the player with zero variance is its own kind of predictable, and the
+00123Cr 2               ; remaining 1-in-4 (or ties, where neither side is objectively better)
+00123Cr 2               ; falls back to the old plain coin flip.
+00123Cr 2               ; -----------------------------------------------------------------------------
+00123Cr 2               ComputeP2AIDirection:
+00123Cr 2  A5 47          lda P2_DIR
+00123Er 2  85 5A          sta AI_DIR_TMP
+001240r 2  20 rr rr       jsr IsDirectionSafeP2
+001243r 2  90 07          bcc @pickTurn
+001245r 2               
+001245r 2                 ; Continuing straight is safe -- usually just take it, but roll a
+001245r 2                 ; small chance to look for a turn anyway.
+001245r 2  20 rr rr       jsr AdvanceRng
+001248r 2  29 0F          and #$0F
+00124Ar 2  D0 52          bne @keepCurrent
+00124Cr 2               
+00124Cr 2               @pickTurn:
+00124Cr 2  20 rr rr       jsr DirTowardP1
+00124Fr 2  85 81          sta AI_PREFERRED_DIR
+001251r 2  C9 FF          cmp #$FF
+001253r 2  F0 13          beq @coinFlip
+001255r 2  20 rr rr       jsr AdvanceRng
+001258r 2  29 03          and #3
+00125Ar 2  C9 03          cmp #3
+00125Cr 2  F0 0A          beq @coinFlip
+00125Er 2  20 rr rr       jsr ComputeP2LeftTurn
+001261r 2  C5 81          cmp AI_PREFERRED_DIR
+001263r 2  F0 09          beq @tryLeftFirst
+001265r 2  4C rr rr       jmp @tryRightFirst
+001268r 2               
+001268r 2               @coinFlip:
+001268r 2  20 rr rr       jsr AdvanceRng
+00126Br 2  4A             lsr a
+00126Cr 2  B0 17          bcs @tryRightFirst
+00126Er 2               
+00126Er 2               @tryLeftFirst:
+00126Er 2  20 rr rr       jsr ComputeP2LeftTurn
+001271r 2  85 5A          sta AI_DIR_TMP
+001273r 2  20 rr rr       jsr IsDirectionSafeP2
+001276r 2  B0 2B          bcs @useAiDir
+001278r 2  20 rr rr       jsr ComputeP2RightTurn
+00127Br 2  85 5A          sta AI_DIR_TMP
+00127Dr 2  20 rr rr       jsr IsDirectionSafeP2
+001280r 2  B0 21          bcs @useAiDir
+001282r 2  4C rr rr       jmp @noSafeTurn
+001285r 2               
+001285r 2               @tryRightFirst:
+001285r 2  20 rr rr       jsr ComputeP2RightTurn
+001288r 2  85 5A          sta AI_DIR_TMP
+00128Ar 2  20 rr rr       jsr IsDirectionSafeP2
+00128Dr 2  B0 14          bcs @useAiDir
+00128Fr 2  20 rr rr       jsr ComputeP2LeftTurn
+001292r 2  85 5A          sta AI_DIR_TMP
+001294r 2  20 rr rr       jsr IsDirectionSafeP2
+001297r 2  B0 0A          bcs @useAiDir
+001299r 2               
+001299r 2               @noSafeTurn:
+001299r 2                 ; No safe turn found: keep current.
+001299r 2  A5 47          lda P2_DIR
+00129Br 2  85 48          sta P2_NEXT_DIR
+00129Dr 2  60             rts
+00129Er 2               
+00129Er 2               @keepCurrent:
+00129Er 2  A5 47          lda P2_DIR
+0012A0r 2  85 48          sta P2_NEXT_DIR
+0012A2r 2  60             rts
+0012A3r 2               
+0012A3r 2               @useAiDir:
+0012A3r 2  A5 5A          lda AI_DIR_TMP
+0012A5r 2  85 48          sta P2_NEXT_DIR
+0012A7r 2  60             rts
+0012A8r 2               
+0012A8r 2               ; -----------------------------------------------------------------------------
+0012A8r 2               ; IsDirectionSafeP2 - In: AI_DIR_TMP = candidate direction, using current
+0012A8r 2               ; P2_X/P2_Y. Out: carry set if safe, clear if not.
+0012A8r 2               ; A candidate turn from a horizontal heading onto UP/DOWN doesn't
+0012A8r 2               ; necessarily take effect next tick the way a plain 1-step lookahead
+0012A8r 2               ; assumes -- ApplyRequestedTurns holds a turn onto a vertical heading
+0012A8r 2               ; until P2_X is grid-aligned (see the comment there), so P2 is committed
+0012A8r 2               ; to continuing in its CURRENT direction for however many pixels remain
+0012A8r 2               ; until that happens, not just the one step this used to check. Confirmed
+0012A8r 2               ; via the debugger: the AI picked UP as "safe" one pixel from the border
+0012A8r 2               ; while off-grid, the turn was held, and P2 drove straight into the wall
+0012A8r 2               ; it had supposedly already decided to avoid. When the candidate is
+0012A8r 2               ; vertical and the current heading is horizontal, walk every pixel of
+0012A8r 2               ; that committed path first, then check the vertical step from wherever
+0012A8r 2               ; it actually lands -- that's the real distance to safety, not 1 pixel.
+0012A8r 2               ;
+0012A8r 2               ; Continuing straight while ALREADY horizontal gets the same treatment,
+0012A8r 2               ; for a different reason: ComputeP2AIDirection only looks for an escape
+0012A8r 2               ; once continuing straight is unsafe, and a plain 1-step check doesn't
+0012A8r 2               ; call that unsafe until the wall is the very next pixel -- by which
+0012A8r 2               ; point P2 has typically already sailed past whatever grid line would
+0012A8r 2               ; have let a turn through in time, and lands back off-grid with no room
+0012A8r 2               ; left for the delay above. Confirmed the same way: P2 ran straight
+0012A8r 2               ; through a fully aligned column with room to spare, reacted for the
+0012A8r 2               ; first time one pixel from the border, and had nowhere left to turn.
+0012A8r 2               ; Looking 8 pixels ahead here -- worst-case turn delay -- means the AI
+0012A8r 2               ; calls "continue" unsafe early enough that a gated turn still has a
+0012A8r 2               ; grid line to reach before whatever it saw coming actually arrives.
+0012A8r 2               ;
+0012A8r 2               ; Turning between two directions on an axis switch that ISN'T gated
+0012A8r 2               ; (vertical-current -> horizontal-candidate, which always takes effect
+0012A8r 2               ; immediately) keeps the plain single-step check -- there's no delay to
+0012A8r 2               ; plan around there.
+0012A8r 2               ;
+0012A8r 2               ; Continuing straight while ALREADY vertical gets the same 8-pixel scan
+0012A8r 2               ; as the horizontal case, for the same reason: a plain 1-step check
+0012A8r 2               ; doesn't call the run unsafe until the wall is the very next pixel,
+0012A8r 2               ; which reads as a last-instant twitch compared to the horizontal case's
+0012A8r 2               ; visibly-early turn -- same underlying AI, inconsistent reaction
+0012A8r 2               ; distance depending purely on which axis it happened to be moving on.
+0012A8r 2               ; This isn't a gating-delay issue the way the horizontal case was (a
+0012A8r 2               ; turn OFF of vertical onto horizontal is never gated, so the 1-step
+0012A8r 2               ; check for the two turn candidates below is already exactly correct
+0012A8r 2               ; and untouched) -- it's purely about giving the AI the same look-ahead
+0012A8r 2               ; on both axes so its behavior doesn't visibly change shape depending on
+0012A8r 2               ; which way it's facing.
+0012A8r 2               ; -----------------------------------------------------------------------------
+0012A8r 2               IsDirectionSafeP2:
+0012A8r 2  A5 47          lda P2_DIR
+0012AAr 2  C9 02          cmp #DIR_LEFT
+0012ACr 2  F0 10          beq @currentHorizontal
+0012AEr 2  C9 03          cmp #DIR_RIGHT
+0012B0r 2  F0 0C          beq @currentHorizontal
+0012B2r 2               
+0012B2r 2                 ; Currently vertical (UP/DOWN). The two turn candidates (onto
+0012B2r 2                 ; LEFT/RIGHT) fall through to @simple's plain 1-step check, same as
+0012B2r 2                 ; always -- see the comment above for why that's still exactly right.
+0012B2r 2                 ; Continuing straight (AI_DIR_TMP == P2_DIR) gets the extended scan.
+0012B2r 2  A5 5A          lda AI_DIR_TMP
+0012B4r 2  C5 47          cmp P2_DIR
+0012B6r 2  D0 03          bne @notContinueV
+0012B8r 2  4C rr rr       jmp @continueLookaheadV
+0012BBr 2               @notContinueV:
+0012BBr 2  4C rr rr       jmp @simple
+0012BEr 2               
+0012BEr 2               @currentHorizontal:
+0012BEr 2  A5 5A          lda AI_DIR_TMP
+0012C0r 2  C9 00          cmp #DIR_UP
+0012C2r 2  F0 2F          beq @gated
+0012C4r 2  C9 01          cmp #DIR_DOWN
+0012C6r 2  F0 2B          beq @gated
+0012C8r 2  80 00          bra @continueLookahead
+0012CAr 2               
+0012CAr 2               @continueLookahead:
+0012CAr 2                 ; AI_DIR_TMP must equal P2_DIR here (horizontal continue) -- turning
+0012CAr 2                 ; onto the opposite horizontal direction is a reversal and never a
+0012CAr 2                 ; candidate ComputeP2AIDirection generates.
+0012CAr 2  A5 45          lda P2_X
+0012CCr 2  85 5B          sta AI_TEST_X
+0012CEr 2  A5 46          lda P2_Y
+0012D0r 2  85 5C          sta AI_TEST_Y
+0012D2r 2  A9 08          lda #8
+0012D4r 2  85 77          sta SCAN_TMP2
+0012D6r 2               @clLoop:
+0012D6r 2  A5 47          lda P2_DIR
+0012D8r 2  C9 03          cmp #DIR_RIGHT
+0012DAr 2  D0 04          bne @clDec
+0012DCr 2  E6 5B          inc AI_TEST_X
+0012DEr 2  80 02          bra @clCheck
+0012E0r 2               @clDec:
+0012E0r 2  C6 5B          dec AI_TEST_X
+0012E2r 2               @clCheck:
+0012E2r 2  A5 5C          lda AI_TEST_Y
+0012E4r 2  A6 5B          ldx AI_TEST_X
+0012E6r 2  20 rr rr       jsr PixelIsSet
+0012E9r 2  D0 06          bne @clBlocked
+0012EBr 2  C6 77          dec SCAN_TMP2
+0012EDr 2  D0 E7          bne @clLoop
+0012EFr 2  38             sec
+0012F0r 2  60             rts
+0012F1r 2               @clBlocked:
+0012F1r 2  18             clc
 0012F2r 2  60             rts
-0012F3r 2               @clBlocked:
-0012F3r 2  18             clc
-0012F4r 2  60             rts
-0012F5r 2               
-0012F5r 2               @gated:
-0012F5r 2                 ; Mirror ApplyRequestedTurns's own instant-vs-gated decision instead of
-0012F5r 2                 ; always assuming the slow (walk-to-alignment) case. If P1's trail
-0012F5r 2                 ; doesn't occupy the column P2 is about to turn into anywhere between
-0012F5r 2                 ; here and the wall, ApplyRequestedTurns applies the turn INSTANTLY at
-0012F5r 2                 ; P2's current, possibly-unaligned X -- not at some future aligned X.
-0012F5r 2                 ; Checking safety at the walked-forward aligned position in that case
-0012F5r 2                 ; verifies a cell P2 was never actually going to move into, while the
-0012F5r 2                 ; cell it really moves into (one step vertically from right here)
-0012F5r 2                 ; never gets checked at all. Confirmed via the debugger: a turn this
-0012F5r 2                 ; check called safe landed P2 on an occupied pixel it had never
-0012F5r 2                 ; examined, because the real move applied instantly at the current
-0012F5r 2                 ; column while this check had verified a different, aligned column
-0012F5r 2                 ; several pixels further along.
-0012F5r 2  A5 45          lda P2_X
-0012F7r 2  85 77          sta SCAN_TMP2
-0012F9r 2  A5 46          lda P2_Y
-0012FBr 2  85 55          sta SCAN_TMP
-0012FDr 2  A9 00          lda #<P1_OWN_BUF
-0012FFr 2  85 72          sta FONT_PTR
-001301r 2  A9 50          lda #>P1_OWN_BUF
-001303r 2  85 73          sta FONT_PTR+1
-001305r 2  A5 5A          lda AI_DIR_TMP
-001307r 2  20 rr rr       jsr PathClearOfOpponent
-00130Ar 2  90 0A          bcc @gatedWalk
-00130Cr 2                 ; Clear the whole way -- the turn applies instantly, right here.
-00130Cr 2  A5 45          lda P2_X
-00130Er 2  85 5B          sta AI_TEST_X
-001310r 2  A5 46          lda P2_Y
-001312r 2  85 5C          sta AI_TEST_Y
-001314r 2  80 25          bra @gatedAligned
-001316r 2               @gatedWalk:
-001316r 2  A5 45          lda P2_X
-001318r 2  85 5B          sta AI_TEST_X
-00131Ar 2  A5 46          lda P2_Y
-00131Cr 2  85 5C          sta AI_TEST_Y
-00131Er 2               @gatedLoop:
-00131Er 2  A5 5B          lda AI_TEST_X
-001320r 2  29 07          and #7
-001322r 2  F0 17          beq @gatedAligned
-001324r 2  A5 47          lda P2_DIR
-001326r 2  C9 03          cmp #DIR_RIGHT
-001328r 2  D0 04          bne @gatedDec
-00132Ar 2  E6 5B          inc AI_TEST_X
-00132Cr 2  80 02          bra @gatedStepCheck
-00132Er 2               @gatedDec:
-00132Er 2  C6 5B          dec AI_TEST_X
-001330r 2               @gatedStepCheck:
-001330r 2  A5 5C          lda AI_TEST_Y
-001332r 2  A6 5B          ldx AI_TEST_X
-001334r 2  20 rr rr       jsr PixelIsSet
-001337r 2  F0 E5          beq @gatedLoop
-001339r 2  18             clc
-00133Ar 2  60             rts
-00133Br 2               @gatedAligned:
-00133Br 2  A5 5A          lda AI_DIR_TMP
-00133Dr 2  C9 00          cmp #DIR_UP
-00133Fr 2  D0 04          bne @gatedDown
-001341r 2  C6 5C          dec AI_TEST_Y
-001343r 2  80 02          bra @gatedFinal
-001345r 2               @gatedDown:
-001345r 2  E6 5C          inc AI_TEST_Y
-001347r 2               @gatedFinal:
-001347r 2  A5 5C          lda AI_TEST_Y
-001349r 2  C9 C0          cmp #192
-00134Br 2  B0 09          bcs @gatedBlocked
-00134Dr 2  A5 5C          lda AI_TEST_Y
-00134Fr 2  A6 5B          ldx AI_TEST_X
-001351r 2  20 rr rr       jsr PixelIsSet
-001354r 2  F0 02          beq @gatedSafe
-001356r 2               @gatedBlocked:
-001356r 2  18             clc
+0012F3r 2               
+0012F3r 2               @gated:
+0012F3r 2                 ; Mirror ApplyRequestedTurns's own instant-vs-gated decision instead of
+0012F3r 2                 ; always assuming the slow (walk-to-alignment) case. If P1's trail
+0012F3r 2                 ; doesn't occupy the column P2 is about to turn into anywhere between
+0012F3r 2                 ; here and the wall, ApplyRequestedTurns applies the turn INSTANTLY at
+0012F3r 2                 ; P2's current, possibly-unaligned X -- not at some future aligned X.
+0012F3r 2                 ; Checking safety at the walked-forward aligned position in that case
+0012F3r 2                 ; verifies a cell P2 was never actually going to move into, while the
+0012F3r 2                 ; cell it really moves into (one step vertically from right here)
+0012F3r 2                 ; never gets checked at all. Confirmed via the debugger: a turn this
+0012F3r 2                 ; check called safe landed P2 on an occupied pixel it had never
+0012F3r 2                 ; examined, because the real move applied instantly at the current
+0012F3r 2                 ; column while this check had verified a different, aligned column
+0012F3r 2                 ; several pixels further along.
+0012F3r 2  A5 45          lda P2_X
+0012F5r 2  85 77          sta SCAN_TMP2
+0012F7r 2  A5 46          lda P2_Y
+0012F9r 2  85 55          sta SCAN_TMP
+0012FBr 2  A9 00          lda #<P1_OWN_BUF
+0012FDr 2  85 72          sta FONT_PTR
+0012FFr 2  A9 50          lda #>P1_OWN_BUF
+001301r 2  85 73          sta FONT_PTR+1
+001303r 2  A5 5A          lda AI_DIR_TMP
+001305r 2  20 rr rr       jsr PathClearOfOpponent
+001308r 2  90 0A          bcc @gatedWalk
+00130Ar 2                 ; Clear the whole way -- the turn applies instantly, right here.
+00130Ar 2  A5 45          lda P2_X
+00130Cr 2  85 5B          sta AI_TEST_X
+00130Er 2  A5 46          lda P2_Y
+001310r 2  85 5C          sta AI_TEST_Y
+001312r 2  80 25          bra @gatedAligned
+001314r 2               @gatedWalk:
+001314r 2  A5 45          lda P2_X
+001316r 2  85 5B          sta AI_TEST_X
+001318r 2  A5 46          lda P2_Y
+00131Ar 2  85 5C          sta AI_TEST_Y
+00131Cr 2               @gatedLoop:
+00131Cr 2  A5 5B          lda AI_TEST_X
+00131Er 2  29 07          and #7
+001320r 2  F0 17          beq @gatedAligned
+001322r 2  A5 47          lda P2_DIR
+001324r 2  C9 03          cmp #DIR_RIGHT
+001326r 2  D0 04          bne @gatedDec
+001328r 2  E6 5B          inc AI_TEST_X
+00132Ar 2  80 02          bra @gatedStepCheck
+00132Cr 2               @gatedDec:
+00132Cr 2  C6 5B          dec AI_TEST_X
+00132Er 2               @gatedStepCheck:
+00132Er 2  A5 5C          lda AI_TEST_Y
+001330r 2  A6 5B          ldx AI_TEST_X
+001332r 2  20 rr rr       jsr PixelIsSet
+001335r 2  F0 E5          beq @gatedLoop
+001337r 2  18             clc
+001338r 2  60             rts
+001339r 2               @gatedAligned:
+001339r 2  A5 5A          lda AI_DIR_TMP
+00133Br 2  C9 00          cmp #DIR_UP
+00133Dr 2  D0 04          bne @gatedDown
+00133Fr 2  C6 5C          dec AI_TEST_Y
+001341r 2  80 02          bra @gatedFinal
+001343r 2               @gatedDown:
+001343r 2  E6 5C          inc AI_TEST_Y
+001345r 2               @gatedFinal:
+001345r 2  A5 5C          lda AI_TEST_Y
+001347r 2  C9 C0          cmp #192
+001349r 2  B0 09          bcs @gatedBlocked
+00134Br 2  A5 5C          lda AI_TEST_Y
+00134Dr 2  A6 5B          ldx AI_TEST_X
+00134Fr 2  20 rr rr       jsr PixelIsSet
+001352r 2  F0 02          beq @gatedSafe
+001354r 2               @gatedBlocked:
+001354r 2  18             clc
+001355r 2  60             rts
+001356r 2               @gatedSafe:
+001356r 2  38             sec
 001357r 2  60             rts
-001358r 2               @gatedSafe:
-001358r 2  38             sec
-001359r 2  60             rts
-00135Ar 2               
-00135Ar 2               @continueLookaheadV:
-00135Ar 2                 ; AI_DIR_TMP must equal P2_DIR here (vertical continue) -- see the
-00135Ar 2                 ; header comment above. Same shape as @continueLookahead, just walking
-00135Ar 2                 ; AI_TEST_Y instead of AI_TEST_X, with the same #192 bounds check
-00135Ar 2                 ; @simple/@gated already use for a Y move (also catches the top edge:
-00135Ar 2                 ; decrementing AI_TEST_Y past 0 wraps to 255, which is >= 192 too).
-00135Ar 2  A5 45          lda P2_X
-00135Cr 2  85 5B          sta AI_TEST_X
-00135Er 2  A5 46          lda P2_Y
-001360r 2  85 5C          sta AI_TEST_Y
-001362r 2  A9 08          lda #8
-001364r 2  85 77          sta SCAN_TMP2
-001366r 2               @clvLoop:
-001366r 2  A5 47          lda P2_DIR
-001368r 2  C9 01          cmp #DIR_DOWN
-00136Ar 2  D0 04          bne @clvDec
-00136Cr 2  E6 5C          inc AI_TEST_Y
-00136Er 2  80 02          bra @clvCheck
-001370r 2               @clvDec:
-001370r 2  C6 5C          dec AI_TEST_Y
-001372r 2               @clvCheck:
-001372r 2  A5 5C          lda AI_TEST_Y
-001374r 2  C9 C0          cmp #192
-001376r 2  B0 0F          bcs @clvBlocked
-001378r 2  A5 5C          lda AI_TEST_Y
-00137Ar 2  A6 5B          ldx AI_TEST_X
-00137Cr 2  20 rr rr       jsr PixelIsSet
-00137Fr 2  D0 06          bne @clvBlocked
-001381r 2  C6 77          dec SCAN_TMP2
-001383r 2  D0 E1          bne @clvLoop
-001385r 2  38             sec
+001358r 2               
+001358r 2               @continueLookaheadV:
+001358r 2                 ; AI_DIR_TMP must equal P2_DIR here (vertical continue) -- see the
+001358r 2                 ; header comment above. Same shape as @continueLookahead, just walking
+001358r 2                 ; AI_TEST_Y instead of AI_TEST_X, with the same #192 bounds check
+001358r 2                 ; @simple/@gated already use for a Y move (also catches the top edge:
+001358r 2                 ; decrementing AI_TEST_Y past 0 wraps to 255, which is >= 192 too).
+001358r 2  A5 45          lda P2_X
+00135Ar 2  85 5B          sta AI_TEST_X
+00135Cr 2  A5 46          lda P2_Y
+00135Er 2  85 5C          sta AI_TEST_Y
+001360r 2  A9 08          lda #8
+001362r 2  85 77          sta SCAN_TMP2
+001364r 2               @clvLoop:
+001364r 2  A5 47          lda P2_DIR
+001366r 2  C9 01          cmp #DIR_DOWN
+001368r 2  D0 04          bne @clvDec
+00136Ar 2  E6 5C          inc AI_TEST_Y
+00136Cr 2  80 02          bra @clvCheck
+00136Er 2               @clvDec:
+00136Er 2  C6 5C          dec AI_TEST_Y
+001370r 2               @clvCheck:
+001370r 2  A5 5C          lda AI_TEST_Y
+001372r 2  C9 C0          cmp #192
+001374r 2  B0 0F          bcs @clvBlocked
+001376r 2  A5 5C          lda AI_TEST_Y
+001378r 2  A6 5B          ldx AI_TEST_X
+00137Ar 2  20 rr rr       jsr PixelIsSet
+00137Dr 2  D0 06          bne @clvBlocked
+00137Fr 2  C6 77          dec SCAN_TMP2
+001381r 2  D0 E1          bne @clvLoop
+001383r 2  38             sec
+001384r 2  60             rts
+001385r 2               @clvBlocked:
+001385r 2  18             clc
 001386r 2  60             rts
-001387r 2               @clvBlocked:
-001387r 2  18             clc
-001388r 2  60             rts
-001389r 2               
-001389r 2               @simple:
-001389r 2  A5 45          lda P2_X
-00138Br 2  85 5B          sta AI_TEST_X
-00138Dr 2  A5 46          lda P2_Y
-00138Fr 2  85 5C          sta AI_TEST_Y
-001391r 2               
-001391r 2  A5 5A          lda AI_DIR_TMP
-001393r 2  C9 00          cmp #DIR_UP
-001395r 2  D0 02          bne @sNotUp
-001397r 2  C6 5C          dec AI_TEST_Y
-001399r 2               @sNotUp:
-001399r 2  A5 5A          lda AI_DIR_TMP
-00139Br 2  C9 01          cmp #DIR_DOWN
-00139Dr 2  D0 02          bne @sNotDown
-00139Fr 2  E6 5C          inc AI_TEST_Y
-0013A1r 2               @sNotDown:
-0013A1r 2  A5 5A          lda AI_DIR_TMP
-0013A3r 2  C9 02          cmp #DIR_LEFT
-0013A5r 2  D0 02          bne @sNotLeft
-0013A7r 2  C6 5B          dec AI_TEST_X
-0013A9r 2               @sNotLeft:
-0013A9r 2  A5 5A          lda AI_DIR_TMP
-0013ABr 2  C9 03          cmp #DIR_RIGHT
-0013ADr 2  D0 02          bne @sCheck
-0013AFr 2  E6 5B          inc AI_TEST_X
-0013B1r 2               
-0013B1r 2               @sCheck:
-0013B1r 2  A5 5C          lda AI_TEST_Y
-0013B3r 2  C9 C0          cmp #192
-0013B5r 2  B0 09          bcs @blocked
-0013B7r 2  A5 5C          lda AI_TEST_Y
-0013B9r 2  A6 5B          ldx AI_TEST_X
-0013BBr 2  20 rr rr       jsr PixelIsSet
-0013BEr 2  F0 02          beq @safe
-0013C0r 2               @blocked:
-0013C0r 2  18             clc
+001387r 2               
+001387r 2               @simple:
+001387r 2  A5 45          lda P2_X
+001389r 2  85 5B          sta AI_TEST_X
+00138Br 2  A5 46          lda P2_Y
+00138Dr 2  85 5C          sta AI_TEST_Y
+00138Fr 2               
+00138Fr 2  A5 5A          lda AI_DIR_TMP
+001391r 2  C9 00          cmp #DIR_UP
+001393r 2  D0 02          bne @sNotUp
+001395r 2  C6 5C          dec AI_TEST_Y
+001397r 2               @sNotUp:
+001397r 2  A5 5A          lda AI_DIR_TMP
+001399r 2  C9 01          cmp #DIR_DOWN
+00139Br 2  D0 02          bne @sNotDown
+00139Dr 2  E6 5C          inc AI_TEST_Y
+00139Fr 2               @sNotDown:
+00139Fr 2  A5 5A          lda AI_DIR_TMP
+0013A1r 2  C9 02          cmp #DIR_LEFT
+0013A3r 2  D0 02          bne @sNotLeft
+0013A5r 2  C6 5B          dec AI_TEST_X
+0013A7r 2               @sNotLeft:
+0013A7r 2  A5 5A          lda AI_DIR_TMP
+0013A9r 2  C9 03          cmp #DIR_RIGHT
+0013ABr 2  D0 02          bne @sCheck
+0013ADr 2  E6 5B          inc AI_TEST_X
+0013AFr 2               
+0013AFr 2               @sCheck:
+0013AFr 2  A5 5C          lda AI_TEST_Y
+0013B1r 2  C9 C0          cmp #192
+0013B3r 2  B0 09          bcs @blocked
+0013B5r 2  A5 5C          lda AI_TEST_Y
+0013B7r 2  A6 5B          ldx AI_TEST_X
+0013B9r 2  20 rr rr       jsr PixelIsSet
+0013BCr 2  F0 02          beq @safe
+0013BEr 2               @blocked:
+0013BEr 2  18             clc
+0013BFr 2  60             rts
+0013C0r 2               @safe:
+0013C0r 2  38             sec
 0013C1r 2  60             rts
-0013C2r 2               @safe:
-0013C2r 2  38             sec
-0013C3r 2  60             rts
-0013C4r 2               
-0013C4r 2               ComputeNextPositions:
-0013C4r 2  A5 40          lda P1_X
-0013C6r 2  85 56          sta P1_NEXT_X
-0013C8r 2  A5 41          lda P1_Y
-0013CAr 2  85 57          sta P1_NEXT_Y
-0013CCr 2               
-0013CCr 2  A5 42          lda P1_DIR
-0013CEr 2  C9 00          cmp #DIR_UP
-0013D0r 2  D0 02          bne @p1NotUp
-0013D2r 2  C6 57          dec P1_NEXT_Y
-0013D4r 2               @p1NotUp:
-0013D4r 2  A5 42          lda P1_DIR
-0013D6r 2  C9 01          cmp #DIR_DOWN
-0013D8r 2  D0 02          bne @p1NotDown
-0013DAr 2  E6 57          inc P1_NEXT_Y
-0013DCr 2               @p1NotDown:
-0013DCr 2  A5 42          lda P1_DIR
-0013DEr 2  C9 02          cmp #DIR_LEFT
-0013E0r 2  D0 02          bne @p1NotLeft
-0013E2r 2  C6 56          dec P1_NEXT_X
-0013E4r 2               @p1NotLeft:
-0013E4r 2  A5 42          lda P1_DIR
-0013E6r 2  C9 03          cmp #DIR_RIGHT
-0013E8r 2  D0 02          bne @p1Done
-0013EAr 2  E6 56          inc P1_NEXT_X
-0013ECr 2               @p1Done:
-0013ECr 2               
-0013ECr 2  A5 45          lda P2_X
-0013EEr 2  85 58          sta P2_NEXT_X
-0013F0r 2  A5 46          lda P2_Y
-0013F2r 2  85 59          sta P2_NEXT_Y
-0013F4r 2               
-0013F4r 2  A5 47          lda P2_DIR
-0013F6r 2  C9 00          cmp #DIR_UP
-0013F8r 2  D0 02          bne @p2NotUp
-0013FAr 2  C6 59          dec P2_NEXT_Y
-0013FCr 2               @p2NotUp:
-0013FCr 2  A5 47          lda P2_DIR
-0013FEr 2  C9 01          cmp #DIR_DOWN
-001400r 2  D0 02          bne @p2NotDown
-001402r 2  E6 59          inc P2_NEXT_Y
-001404r 2               @p2NotDown:
-001404r 2  A5 47          lda P2_DIR
-001406r 2  C9 02          cmp #DIR_LEFT
-001408r 2  D0 02          bne @p2NotLeft
-00140Ar 2  C6 58          dec P2_NEXT_X
-00140Cr 2               @p2NotLeft:
-00140Cr 2  A5 47          lda P2_DIR
-00140Er 2  C9 03          cmp #DIR_RIGHT
-001410r 2  D0 02          bne @p2Done
-001412r 2  E6 58          inc P2_NEXT_X
-001414r 2               @p2Done:
-001414r 2  60             rts
-001415r 2               
-001415r 2               CommitP1Move:
-001415r 2  A5 56          lda P1_NEXT_X
-001417r 2  85 40          sta P1_X
-001419r 2  A5 57          lda P1_NEXT_Y
-00141Br 2  85 41          sta P1_Y
-00141Dr 2               
-00141Dr 2  A5 41          lda P1_Y
-00141Fr 2  A6 40          ldx P1_X
-001421r 2  20 rr rr       jsr PixelSetP1Trail
-001424r 2  60             rts
-001425r 2               
-001425r 2               CommitP2Move:
-001425r 2  A5 58          lda P2_NEXT_X
-001427r 2  85 45          sta P2_X
-001429r 2  A5 59          lda P2_NEXT_Y
-00142Br 2  85 46          sta P2_Y
-00142Dr 2               
-00142Dr 2  A5 46          lda P2_Y
-00142Fr 2  A6 45          ldx P2_X
-001431r 2  20 rr rr       jsr PixelSetP2Trail
-001434r 2  60             rts
-001435r 2               
-001435r 1               
-001435r 1               .segment "CART"
-001435r 1               
-001435r 1               GAME_SPEED_LO = 8
-001435r 1               GAME_SPEED_HI = 0
-001435r 1               
-001435r 1               CartReset:
-001435r 1  A2 FF          ldx #$ff
-001437r 1  9A             txs                             ; KernalInit does not reset the stack
-001438r 1  20 78 A0       jsr KernalInit                  ; pointer or enable interrupts itself --
-00143Br 1  58             cli                              ; every sibling cartridge in this family
-00143Cr 1                                                   ; does both here, and skipping them left
-00143Cr 1                                                   ; the IRQ-driven keyboard scanner (and
-00143Cr 1                                                   ; anything else interrupt-driven) dead
-00143Cr 1               
-00143Cr 1  A9 00          lda #0
-00143Er 1  20 0F A0       jsr SetIOMode                   ; video/local keyboard, so Chrin (used by
-001441r 1                                                   ; the joystick-first keyboard fallback,
-001441r 1                                                   ; including on the title screen, before
-001441r 1                                                   ; StartRound's own SetIOMode call would
-001441r 1                                                   ; otherwise be the first one) reads from
-001441r 1                                                   ; the right source from the very start
-001441r 1               
-001441r 1  20 15 A0       jsr InitVideo
-001444r 1  20 rr rr       jsr InitGraphicsI
-001447r 1  20 rr rr       jsr NewGame
-00144Ar 1               
-00144Ar 1               MainLoop:
-00144Ar 1  20 rr rr       jsr PollInput
-00144Dr 1  20 rr rr       jsr PollInputP2
-001450r 1  20 rr rr       jsr Tick
-001453r 1  A9 08          lda #GAME_SPEED_LO
-001455r 1  A2 00          ldx #GAME_SPEED_HI
-001457r 1  20 75 A0       jsr SysDelay
-00145Ar 1  4C rr rr       jmp MainLoop
-00145Dr 1               
-00145Dr 1               ; Dispatch through the RAM vectors KernalInit points at the Kernal's own
-00145Dr 1               ; default handlers (keyboard scanning included) -- a bare `rti` here, as
-00145Dr 1               ; this cartridge had before, means the IRQ-driven keyboard scanner (and
-00145Dr 1               ; anything else interrupt-driven) never runs at all, regardless of cli.
-00145Dr 1               IrqTrampoline:
-00145Dr 1  6C 00 03       jmp (IRQ_PTR)
-001460r 1               
-001460r 1               NmiTrampoline:
-001460r 1  6C 04 03       jmp (NMI_PTR)
-001463r 1               
-001463r 1               .segment "VECTORS"
+0013C2r 2               
+0013C2r 2               ComputeNextPositions:
+0013C2r 2  A5 40          lda P1_X
+0013C4r 2  85 56          sta P1_NEXT_X
+0013C6r 2  A5 41          lda P1_Y
+0013C8r 2  85 57          sta P1_NEXT_Y
+0013CAr 2               
+0013CAr 2  A5 42          lda P1_DIR
+0013CCr 2  C9 00          cmp #DIR_UP
+0013CEr 2  D0 02          bne @p1NotUp
+0013D0r 2  C6 57          dec P1_NEXT_Y
+0013D2r 2               @p1NotUp:
+0013D2r 2  A5 42          lda P1_DIR
+0013D4r 2  C9 01          cmp #DIR_DOWN
+0013D6r 2  D0 02          bne @p1NotDown
+0013D8r 2  E6 57          inc P1_NEXT_Y
+0013DAr 2               @p1NotDown:
+0013DAr 2  A5 42          lda P1_DIR
+0013DCr 2  C9 02          cmp #DIR_LEFT
+0013DEr 2  D0 02          bne @p1NotLeft
+0013E0r 2  C6 56          dec P1_NEXT_X
+0013E2r 2               @p1NotLeft:
+0013E2r 2  A5 42          lda P1_DIR
+0013E4r 2  C9 03          cmp #DIR_RIGHT
+0013E6r 2  D0 02          bne @p1Done
+0013E8r 2  E6 56          inc P1_NEXT_X
+0013EAr 2               @p1Done:
+0013EAr 2               
+0013EAr 2  A5 45          lda P2_X
+0013ECr 2  85 58          sta P2_NEXT_X
+0013EEr 2  A5 46          lda P2_Y
+0013F0r 2  85 59          sta P2_NEXT_Y
+0013F2r 2               
+0013F2r 2  A5 47          lda P2_DIR
+0013F4r 2  C9 00          cmp #DIR_UP
+0013F6r 2  D0 02          bne @p2NotUp
+0013F8r 2  C6 59          dec P2_NEXT_Y
+0013FAr 2               @p2NotUp:
+0013FAr 2  A5 47          lda P2_DIR
+0013FCr 2  C9 01          cmp #DIR_DOWN
+0013FEr 2  D0 02          bne @p2NotDown
+001400r 2  E6 59          inc P2_NEXT_Y
+001402r 2               @p2NotDown:
+001402r 2  A5 47          lda P2_DIR
+001404r 2  C9 02          cmp #DIR_LEFT
+001406r 2  D0 02          bne @p2NotLeft
+001408r 2  C6 58          dec P2_NEXT_X
+00140Ar 2               @p2NotLeft:
+00140Ar 2  A5 47          lda P2_DIR
+00140Cr 2  C9 03          cmp #DIR_RIGHT
+00140Er 2  D0 02          bne @p2Done
+001410r 2  E6 58          inc P2_NEXT_X
+001412r 2               @p2Done:
+001412r 2  60             rts
+001413r 2               
+001413r 2               CommitP1Move:
+001413r 2  A5 56          lda P1_NEXT_X
+001415r 2  85 40          sta P1_X
+001417r 2  A5 57          lda P1_NEXT_Y
+001419r 2  85 41          sta P1_Y
+00141Br 2               
+00141Br 2  A5 41          lda P1_Y
+00141Dr 2  A6 40          ldx P1_X
+00141Fr 2  20 rr rr       jsr PixelSetP1Trail
+001422r 2  60             rts
+001423r 2               
+001423r 2               CommitP2Move:
+001423r 2  A5 58          lda P2_NEXT_X
+001425r 2  85 45          sta P2_X
+001427r 2  A5 59          lda P2_NEXT_Y
+001429r 2  85 46          sta P2_Y
+00142Br 2               
+00142Br 2  A5 46          lda P2_Y
+00142Dr 2  A6 45          ldx P2_X
+00142Fr 2  20 rr rr       jsr PixelSetP2Trail
+001432r 2  60             rts
+001433r 2               
+001433r 1               
+001433r 1               .segment "CART"
+001433r 1               
+001433r 1               GAME_SPEED_LO = 8
+001433r 1               GAME_SPEED_HI = 0
+001433r 1               
+001433r 1               CartReset:
+001433r 1  A2 FF          ldx #$ff
+001435r 1  9A             txs                             ; KernalInit does not reset the stack
+001436r 1  20 78 A0       jsr KernalInit                  ; pointer or enable interrupts itself --
+001439r 1  58             cli                              ; every sibling cartridge in this family
+00143Ar 1                                                   ; does both here, and skipping them left
+00143Ar 1                                                   ; the IRQ-driven keyboard scanner (and
+00143Ar 1                                                   ; anything else interrupt-driven) dead
+00143Ar 1               
+00143Ar 1  A9 00          lda #0
+00143Cr 1  20 0F A0       jsr SetIOMode                   ; video/local keyboard, so Chrin (used by
+00143Fr 1                                                   ; the joystick-first keyboard fallback,
+00143Fr 1                                                   ; including on the title screen, before
+00143Fr 1                                                   ; StartRound's own SetIOMode call would
+00143Fr 1                                                   ; otherwise be the first one) reads from
+00143Fr 1                                                   ; the right source from the very start
+00143Fr 1               
+00143Fr 1  20 15 A0       jsr InitVideo
+001442r 1  20 rr rr       jsr InitGraphicsI
+001445r 1  20 rr rr       jsr NewGame
+001448r 1               
+001448r 1               MainLoop:
+001448r 1  20 rr rr       jsr PollInput
+00144Br 1  20 rr rr       jsr PollInputP2
+00144Er 1  20 rr rr       jsr Tick
+001451r 1  A9 08          lda #GAME_SPEED_LO
+001453r 1  A2 00          ldx #GAME_SPEED_HI
+001455r 1  20 75 A0       jsr SysDelay
+001458r 1  4C rr rr       jmp MainLoop
+00145Br 1               
+00145Br 1               ; Dispatch through the RAM vectors KernalInit points at the Kernal's own
+00145Br 1               ; default handlers (keyboard scanning included) -- a bare `rti` here, as
+00145Br 1               ; this cartridge had before, means the IRQ-driven keyboard scanner (and
+00145Br 1               ; anything else interrupt-driven) never runs at all, regardless of cli.
+00145Br 1               IrqTrampoline:
+00145Br 1  6C 00 03       jmp (IRQ_PTR)
+00145Er 1               
+00145Er 1               NmiTrampoline:
+00145Er 1  6C 04 03       jmp (NMI_PTR)
+001461r 1               
+001461r 1               .segment "VECTORS"
 000000r 1  rr rr        .word NmiTrampoline
 000002r 1  rr rr        .word CartReset
 000004r 1  rr rr        .word IrqTrampoline

@@ -1,7 +1,9 @@
-6502-LightCycles
-===============
+6502-TrailDuel
+==============
 
-Tron-style LightCycles for the A.C. Wright 6502 platform.
+TrailDuel for the A.C. Wright 6502 platform, a trail duel for one or two players: each rider leaves a trail behind them, and the last one riding wins. It was called LightCycles until 2026-11-19.
+
+**[Play it in your browser](https://games.infinitetoken.com/6502/trailduel)**, running in A.C. Wright's emulator.
 
 Two-player deterministic gameplay first, optional one-player AI later.
 

@@ -1,4 +1,4 @@
-TARGET = LightCycles
+TARGET = TrailDuel
 CONFIG = 6502
 
 .PHONY: all build view run clean

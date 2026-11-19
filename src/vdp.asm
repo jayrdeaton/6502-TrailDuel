@@ -1,5 +1,5 @@
 ; =============================================================================
-;   vdp.asm - TMS9918 Graphics II bitmap renderer for LightCycles
+;   vdp.asm - TMS9918 Graphics II bitmap renderer for TrailDuel
 ; =============================================================================
 
 .segment "CART"

@@ -1,5 +1,5 @@
 ; =============================================================================
-;   zeropage.inc - initial zero-page layout for LightCycles
+;   zeropage.inc - initial zero-page layout for TrailDuel
 ; =============================================================================
 
 STATE_TITLE     = 0
@@ -70,20 +70,20 @@ MENU_P2_PREV    := $67
 KB_DIR_P1       := $68   ; DrainKeyboardSplit output: WASD direction (P1)
 KB_DIR_P2       := $69   ; DrainKeyboardSplit output: arrow-key direction (P2)
 KB_FIRE         := $6A   ; DrainKeyboardSplit output: 1 if either fire key seen
-                          ; this call - the byte LightCycles actually reads,
+                          ; this call - the byte TrailDuel actually reads,
                           ; since START/pause is one shared action here, not
                           ; per-player
 PICKER_TMP      := $6B   ; HandleColorPicker scratch: effective LEFT/RIGHT byte
-KB_DIR          := $6C   ; unused output of DrainKeyboardCombined - LightCycles
+KB_DIR          := $6C   ; unused output of DrainKeyboardCombined - TrailDuel
                           ; calls DrainKeyboardSplit, not Combined, but the
                           ; library assembles as one unit so KB_DIR must still
                           ; resolve to something
 KB_FIRE_P1      := $6D   ; DrainKeyboardSplit output: space seen this call.
-                          ; Unused by LightCycles (no per-player fire action)
+                          ; Unused by TrailDuel (no per-player fire action)
                           ; but must resolve to something for the same reason
                           ; as KB_DIR above.
 KB_FIRE_P2      := $6E   ; DrainKeyboardSplit output: enter seen this call.
-                          ; Unused by LightCycles, same reason as KB_FIRE_P1.
+                          ; Unused by TrailDuel, same reason as KB_FIRE_P1.
 
 ; --- Bitmap-mode text renderer (src/font.asm, DrawChar/DrawText in vdp.asm) ---
 TEXT_ROW        := $6F   ; caller-set: top-left Y pixel origin
