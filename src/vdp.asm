@@ -1,738 +1,757 @@
 ; =============================================================================
-;   vdp.asm - TMS9918 Graphics II bitmap renderer for TrailDuel
+;   vdp.asm - the arena on a 6502-PICOVDP, drawn a pixel at a time
+; =============================================================================
+;   Everything that knows about the video hardware lives here, so a port to
+;   another machine replaces this file. The game draws the arena's border and
+;   trails with PixelSetBorder, PixelSetP1Trail/P2Trail and tests it with
+;   PixelIsSet, in screen pixels: x 0-319 (low byte in X, bit 8 in PX_HI), y
+;   0-239. The title and messages draw with PixelSet, PixelClear and the text
+;   routines in a 256 x 192 area centered on the screen (UI_X, UI_Y), where
+;   their places fit in a byte. It also moves the riders' head sprites.
+;
+;   Full mode: 40 x 30 cells of 8 x 8, the whole 320 x 240. The arena's 38 x 26
+;   cells (columns 1-38, rows 2-27) each have a tile of their own at 2 bits a
+;   pixel, so every pixel has its own color: 1 is player 1's trail, 2 player
+;   2's, 3 the border's blue in the ring of cells round the edge and white
+;   everywhere inside it, where the text goes. A layer reaches 512 tiles and the
+;   arena needs 988, so rows 2-14 are layer 0's and rows 15-27 layer 1's, 494
+;   each. The cells round the arena are the frame: black, or red while a linked
+;   round waits on the other machine (SetWaiting). Layer 0 is opaque, so the
+;   picture is black where nothing is drawn.
+;
+;   SHADOW, in RAM, holds the same tiles, so PixelIsSet never asks the card.
+;   Port A only: the Kernal leaves the card alone in interrupts, so no SEI.
 ; =============================================================================
 
 .segment "CART"
 
-NAME_TABLE_BASE  = $1800
-COLOR_TABLE_BASE = $2000
-SPR_ATTR_BASE    = $1B00
-SPR_PAT_BASE     = $3800
+; Video memory. The layers' tiles each have a 16 KB bank of their own.
+V_L0NAME      = $0000              ; 1,200 bytes each, so 2 KB apart
+V_L0ATTR      = $0800
+V_L1NAME      = $1000
+V_L1ATTR      = $1800
+V_SPRATTR     = $2000
+V_SPRPAT      = $2800
+V_L0PAT       = $4000              ; bank 1
+V_L1PAT       = $8000              ; bank 2
+V_PALETTE     = $3C00              ; in bank 3: entry 0
 
-DEFAULT_TRAIL_COLOR = (TMS_LT_BLUE << 4) | TMS_BLACK
-BORDER_FG           = TMS_LT_BLUE
-COLOR_EMPTY         = (TMS_BLACK << 4) | TMS_BLACK
+COLS          = 40
+ROWS          = 30
+FIRST_COL     = 1                  ; the arena's cells
+LAST_COL      = 38
+FIRST_ROW     = 2
+LAST_ROW      = 27
+ARENA_COLS    = LAST_COL - FIRST_COL + 1
+LAYER_TILES   = ARENA_COLS * 13
+LAYER_BYTES   = LAYER_TILES * 16
+LAYER_PAL     = 0                  ; the sub-palettes are entries 0-11
+SUB_EDGE      = 0                  ; 3 is the border's blue
+SUB_INSIDE    = 1                  ; 3 is white
+SUB_FRAME     = 2                  ; 0 is the frame round the arena
+FRAME_ENTRY   = SUB_FRAME * 4
+UI_X          = 32                 ; where the title's 256 x 192 starts
+UI_Y          = 24
+HIDE_Y        = 240                ; a sprite here is below the picture
+HEAD_ATTR     = $40 | 7            ; in front of layer 1; at 1bpp, entry 15 (white)
+BORDER_FG     = TMS_LT_BLUE
 
-VdpWriteReg:
-  php
-  sei
+VideoRegs:
+  .byte VC_REG_MODE1,     $00      ; display off, 8x8 sprites
+  .byte VC_REG_MODE0,     $00
+  .byte VC_REG_VMODE,     VC_VMODE_FULL
+  .byte VC_REG_VBANK,     0
+  .byte VC_REG_VINC,      1
+  .byte VC_REG_IRQEN,     0
+  .byte VC_REG_STATSEL_A, 0
+  .byte VC_REG_COLOR,     0
+  .byte VC_REG_L0NAME,    V_L0NAME / $400
+  .byte VC_REG_L0ATTR,    V_L0ATTR / $400
+  .byte VC_REG_L0PAT,     V_L0PAT / $800
+  .byte VC_REG_L0SCRX,    0
+  .byte VC_REG_L0SCRY,    0
+  .byte VC_REG_L0CTRL,    VC_LCTRL_2BPP | VC_LCTRL_ATTR_CELL | VC_LCTRL_ENABLE | VC_LCTRL_OPAQUE
+  .byte VC_REG_L0PAL,     LAYER_PAL
+  .byte VC_REG_L1NAME,    V_L1NAME / $400
+  .byte VC_REG_L1ATTR,    V_L1ATTR / $400
+  .byte VC_REG_L1PAT,     V_L1PAT / $800
+  .byte VC_REG_L1SCRX,    0
+  .byte VC_REG_L1SCRY,    0
+  .byte VC_REG_L1CTRL,    VC_LCTRL_2BPP | VC_LCTRL_ATTR_CELL | VC_LCTRL_ENABLE
+  .byte VC_REG_L1PAL,     LAYER_PAL
+  .byte VC_REG_SPRATTR,   V_SPRATTR / $80
+  .byte VC_REG_SPRPAT,    V_SPRPAT / $800
+  .byte VC_REG_SPRCOUNT,  2
+  .byte VC_REG_SPRCTRL,   VC_SPRCTRL_ENABLE | VC_SPRCTRL_1BPP
+  .byte VC_REG_SPRLIMIT,  32
+  .byte VC_REG_SPRPAL,    0
+VIDEO_REGS = * - VideoRegs
+
+; The sixteen TMS9918 colors as the PICOVDP's default palette has them, $0R, $GB
+TmsRgb:
+  .byte $00, $00,  $00, $00,  $02, $C4,  $06, $D7
+  .byte $05, $5E,  $07, $7F,  $0C, $55,  $04, $EE
+  .byte $0F, $55,  $0F, $77,  $0C, $B5,  $0D, $C8
+  .byte $02, $A4,  $0C, $5B,  $0C, $CC,  $0F, $FF
+
+; Where each cell row (2-27) and column (1-38) of the arena starts in SHADOW
+RowOffLo:
+.repeat ROWS, I
+  .if I >= FIRST_ROW && I <= LAST_ROW
+    .byte <((I - FIRST_ROW) * ARENA_COLS * 16)
+  .else
+    .byte 0
+  .endif
+.endrepeat
+RowOffHi:
+.repeat ROWS, I
+  .if I >= FIRST_ROW && I <= LAST_ROW
+    .byte >((I - FIRST_ROW) * ARENA_COLS * 16)
+  .else
+    .byte 0
+  .endif
+.endrepeat
+ColOffLo:
+.repeat COLS, I
+  .if I >= FIRST_COL && I <= LAST_COL
+    .byte <((I - FIRST_COL) * 16)
+  .else
+    .byte 0
+  .endif
+.endrepeat
+ColOffHi:
+.repeat COLS, I
+  .if I >= FIRST_COL && I <= LAST_COL
+    .byte >((I - FIRST_COL) * 16)
+  .else
+    .byte 0
+  .endif
+.endrepeat
+
+; 2-bit pixels, four to a byte, the leftmost highest: what clears pixel n of a
+; byte, and each value there
+PixClear:
+  .byte $3F, $CF, $F3, $FC
+PixBits:
+  .byte $00, $00, $00, $00
+  .byte $40, $10, $04, $01
+  .byte $80, $20, $08, $02
+PixMask:
+  .byte $C0, $30, $0C, $03
+
+; Each layer's first and last cell row
+LayerFirst:
+  .byte FIRST_ROW, FIRST_ROW + 13
+LayerLast:
+  .byte FIRST_ROW + 12, LAST_ROW
+
+; VReg - register X to A. Keeps X.
+VReg:
   sta VC_REG
   txa
-  ora #$80
+  ora #VC_REG_WRITE
   sta VC_REG
-  plp
   rts
 
-VdpSetAddr:
-  php
-  sei
+; VAddr - port A writes from A (low), X (high 6 bits) in the bank VBANK holds.
+; Keeps X.
+VAddr:
   sta VC_REG
   txa
-  ora #$40
+  ora #VC_ADDR_WRITE
   sta VC_REG
-  plp
   rts
 
-InitGraphicsI:
-  lda HW_PRESENT
-  and #HW_VID
-  bne @haveVideo
-@halt:
-  bra @halt
+; SetVBank - which 16 KB of video memory addresses reach, A (0-3). Clobbers X.
+SetVBank:
+  cmp VBANK_NOW
+  beq @done
+  sta VBANK_NOW
+  ldx #VC_REG_VBANK
+  jmp VReg
+@done:
+  rts
 
-@haveVideo:
-  ; Blank while reprogramming mode and tables.
-  lda #$80
-  ldx #1
-  jsr VdpWriteReg
-
-  lda #$02
-  ldx #0
-  jsr VdpWriteReg
-  lda #$80
-  ldx #1
-  jsr VdpWriteReg
-  lda #$06
-  ldx #2
-  jsr VdpWriteReg
-  lda #$FF
-  ldx #3
-  jsr VdpWriteReg
-  lda #$03
-  ldx #4
-  jsr VdpWriteReg
-  lda #$36
-  ldx #5
-  jsr VdpWriteReg
-  lda #$07
-  ldx #6
-  jsr VdpWriteReg
+; SetWaiting - A nonzero turns the frame round the arena red, while a linked
+; round waits on the other machine; zero puts it back to black. Clobbers X, Y.
+SetWaiting:
+  pha
+  lda #3
+  jsr SetVBank
+  lda #<(V_PALETTE + FRAME_ENTRY * 2)
+  ldx #>(V_PALETTE + FRAME_ENTRY * 2)
+  jsr VAddr
+  pla
+  beq @black
+  lda #TMS_MED_RED
+  bra @put
+@black:
   lda #TMS_BLACK
-  ldx #7
-  jsr VdpWriteReg
+@put:
+  jsr PutRgb
+  lda #0
+  jmp SetVBank
 
-  jsr FillNameTable
-  jsr FillColorTable
+; WaitFrames - A pictures end.
+WaitFrames:
+  tax
+@frame:
+  bit VC_STATUS                    ; bit 7 sets as a picture ends; reading clears it
+  bpl @frame
+  dex
+  bne @frame
+  rts
+
+; VideoInit - set the card up, the arena blank and the display on.
+VideoInit:
+  ldy #0
+@regs:
+  ldx VideoRegs,y
+  lda VideoRegs+1,y
+  jsr VReg
+  iny
+  iny
+  cpy #VIDEO_REGS
+  bne @regs
+  stz VBANK_NOW
+  jsr FillLayers
+  lda #0
+  jsr SetWaiting
   jsr ClearScreen
   jsr InitHeadSprites
+  lda #VC_MODE1_DISP               ; display on, 8x8 sprites
+  ldx #VC_REG_MODE1
+  jmp VReg
 
-  ; Unblank display.
-  lda #$C0
-  ldx #1
-  jsr VdpWriteReg
-  rts
-
-; Every routine below writes a long run of VC_DATA bytes after a single
-; VdpSetAddr call, relying on the VDP's own address auto-increment to stay
-; in step with each write -- an interrupt landing mid-run (reading VDP
-; status, which resets the same two-byte write-latch these writes depend
-; on) desyncs everything after it. PHP/SEI/PLP wraps the whole run, not
-; just VdpSetAddr's own two-byte sequence (nesting PHP/SEI/PLP composes
-; safely; nesting raw SEI/CLI does not).
-FillNameTable:
-  php
-  sei
-  lda #<NAME_TABLE_BASE
-  ldx #>NAME_TABLE_BASE
-  jsr VdpSetAddr
-
-  ldx #3
-@block:
-  ldy #0
-@seq:
-  tya
-  sta VC_DATA
-  iny
-  bne @seq
-  dex
-  bne @block
-  plp
-  rts
-
-FillColorTable:
-  php
-  sei
-  lda #<COLOR_TABLE_BASE
-  ldx #>COLOR_TABLE_BASE
-  jsr VdpSetAddr
-
-  ldx #$18
-  lda #COLOR_EMPTY
-@page:
-  ldy #0
-@byte:
-  sta VC_DATA
-  iny
-  bne @byte
-  dex
-  bne @page
-  plp
-  rts
-
-InitHeadSprites:
-  php
-  sei
-  lda #<SPR_PAT_BASE
-  ldx #>SPR_PAT_BASE
-  jsr VdpSetAddr
-
-  ; Sprite pattern 0: one bright pixel in top-left.
-  lda #%10000000
-  sta VC_DATA
+; FillLayers - both layers' name and attribute tables: the arena's cells in a
+; layer's rows take its tiles 1-494 in order, every other cell tile 0, which is
+; blank. The ring of cells round the arena's edge takes the border's
+; sub-palette, and the cells outside it, on layer 0, the frame's.
+FillLayers:
+  stz FL_LAYER
+@layer:
+  stz FL_PASS                      ; 0 the names, 1 the attributes
+@pass:
+  lda FL_LAYER
+  asl a
+  asl a
+  asl a
+  asl a                            ; the second layer's tables are $1000 on
+  ldx FL_PASS
+  beq @names
+  ora #>V_L0ATTR
+  bra @at
+@names:
+  ora #>V_L0NAME
+@at:
+  tax
   lda #0
-  ldy #7
-@sp0:
-  sta VC_DATA
-  dey
-  bne @sp0
-
-  ; Sprite pattern 1: same single pixel.
-  lda #%10000000
-  sta VC_DATA
-  lda #0
-  ldy #7
-@sp1:
-  sta VC_DATA
-  dey
-  bne @sp1
-
-  ; Hide both sprites initially and terminate list.
-  lda #<SPR_ATTR_BASE
-  ldx #>SPR_ATTR_BASE
-  jsr VdpSetAddr
-
-  lda #208
-  sta VC_DATA
-  lda #0
-  sta VC_DATA
-  sta VC_DATA
-  sta VC_DATA
-
-  lda #208
-  sta VC_DATA
-  lda #0
-  sta VC_DATA
-  sta VC_DATA
-  sta VC_DATA
-
-  lda #208
-  sta VC_DATA
-  plp
-  rts
-
-UpdateHeadSprites:
-  php
-  sei
-  lda #<SPR_ATTR_BASE
-  ldx #>SPR_ATTR_BASE
-  jsr VdpSetAddr
-
-  ; Sprite 0 (P1)
-  lda P1_ALIVE
-  beq @hide0
-  lda P1_Y
-  cmp #192
-  bcs @hide0
-  ; TMS9918 sprite Y attribute is encoded as (screen_y - 1).
-  sec
-  sbc #1
-  sta VC_DATA
-  lda P1_X
-  sta VC_DATA
-  lda #0
-  sta VC_DATA
-  lda #TMS_WHITE
-  sta VC_DATA
-  jmp @sprite1
-
-@hide0:
-  lda #208
-  sta VC_DATA
-  lda #0
-  sta VC_DATA
-  sta VC_DATA
-  sta VC_DATA
-
-@sprite1:
-  lda P2_ALIVE
-  beq @hide1
-  lda P2_Y
-  cmp #192
-  bcs @hide1
-  ; TMS9918 sprite Y attribute is encoded as (screen_y - 1).
-  sec
-  sbc #1
-  sta VC_DATA
-  lda P2_X
-  sta VC_DATA
+  jsr VAddr
   lda #1
+  sta FL_TILE
+  stz FL_TILE+1
+  stz FL_ROW
+@row:
+  stz FL_COL
+@cell:
+  jsr ArenaCell
+  bcs @arena
+  ; outside the arena: the frame on layer 0, nothing on layer 1
+  lda FL_PASS
+  beq @blank
+  lda FL_LAYER
+  bne @blank
+  lda #SUB_FRAME
+  bra @write
+@arena:
+  ldx FL_LAYER
+  lda FL_ROW
+  cmp LayerFirst,x
+  bcc @blank
+  lda LayerLast,x
+  cmp FL_ROW
+  bcc @blank
+  lda FL_PASS
+  bne @attr
+  lda FL_TILE
+  bra @put
+@attr:
+  lda #SUB_EDGE
+  ldx FL_COL
+  cpx #FIRST_COL
+  beq @edge
+  cpx #LAST_COL
+  beq @edge
+  ldx FL_ROW
+  cpx #FIRST_ROW
+  beq @edge
+  cpx #LAST_ROW
+  beq @edge
+  lda #SUB_INSIDE
+@edge:
+  ldx FL_TILE+1                    ; tiles past 255 take the attribute's top bit
+  beq @put
+  ora #$80
+@put:
   sta VC_DATA
-  lda #TMS_WHITE
-  sta VC_DATA
-  jmp @end
-
-@hide1:
-  lda #208
-  sta VC_DATA
+  inc FL_TILE
+  bne @next
+  inc FL_TILE+1
+  bra @next
+@blank:
   lda #0
+@write:
   sta VC_DATA
-  sta VC_DATA
-  sta VC_DATA
-
-@end:
-  lda #208
-  sta VC_DATA
-  plp
+@next:
+  inc FL_COL
+  lda FL_COL
+  cmp #COLS
+  beq @rowDone
+  jmp @cell
+@rowDone:
+  inc FL_ROW
+  lda FL_ROW
+  cmp #ROWS
+  beq @tableDone
+  jmp @row
+@tableDone:
+  inc FL_PASS
+  lda FL_PASS
+  cmp #2
+  beq @layerDone
+  jmp @pass
+@layerDone:
+  inc FL_LAYER
+  lda FL_LAYER
+  cmp #2
+  beq @done
+  jmp @layer
+@done:
   rts
 
-ClearScreen:
-  ; Clear RAM shadow bitmap.
-  lda #<BITMAP_BUF
-  sta WORK_PTR
-  lda #>BITMAP_BUF
-  sta WORK_PTR+1
-  ldx #$18
+; ArenaCell - carry set if cell (FL_COL, FL_ROW) is one of the arena's.
+ArenaCell:
+  lda FL_COL
+  cmp #FIRST_COL
+  bcc @no
+  cmp #LAST_COL + 1
+  bcs @no
+  lda FL_ROW
+  cmp #FIRST_ROW
+  bcc @no
+  cmp #LAST_ROW + 1
+  bcs @no
+  sec
+  rts
+@no:
+  clc
+  rts
+
+; SetPalette - the sub-palettes from the players' trail colors: 1 is player 1,
+; 2 player 2, and 3 the border's blue round the edge and white inside it. Entry
+; 0, value 0 of the first, is black for the empty arena. The frame's entry is
+; SetWaiting's. The head sprites' white is entry 15, which stays as the card
+; has it.
+SetPalette:
+  lda #3
+  jsr SetVBank
+  lda #<V_PALETTE
+  ldx #>V_PALETTE
+  jsr VAddr
+  lda #BORDER_FG
+  jsr PutSub
+  lda #TMS_WHITE
+  jsr PutSub
   lda #0
+  jmp SetVBank
+
+; PutSub - a sub-palette: nothing, the two trails, then color A.
+PutSub:
+  pha
+  lda #TMS_BLACK
+  jsr PutRgb
+  lda P1_TRAIL_COLOR
+  jsr PutRgb
+  lda P2_TRAIL_COLOR
+  jsr PutRgb
+  pla
+  ; falls through
+
+; PutRgb - TMS color A's palette entry.
+PutRgb:
+  asl a
+  tay
+  lda TmsRgb,y
+  sta VC_DATA
+  lda TmsRgb+1,y
+  sta VC_DATA
+  rts
+
+; ClearScreen - an empty arena: SHADOW and both layers' tiles.
+ClearScreen:
+  lda #<SHADOW
+  sta WORK_PTR
+  lda #>SHADOW
+  sta WORK_PTR+1
+  ldx #>(LAYER_BYTES * 2 + 255)
+  lda #0
+  tay
 @ramPage:
-  ldy #0
-@ramByte:
   sta (WORK_PTR),y
   iny
-  bne @ramByte
+  bne @ramPage
   inc WORK_PTR+1
   dex
   bne @ramPage
 
-  ; Clear RAM shadow color bytes.
-  lda #<COLOR_BUF
-  sta WORK_PTR
-  lda #>COLOR_BUF
-  sta WORK_PTR+1
-  ldx #$18
-  lda #COLOR_EMPTY
-@clrColorPage:
-  ldy #0
-@clrColorByte:
-  sta (WORK_PTR),y
-  iny
-  bne @clrColorByte
-  inc WORK_PTR+1
-  dex
-  bne @clrColorPage
-
-  ; Clear the trail ownership planes -- stale ownership bits from a
-  ; previous round would corrupt this round's majority-color voting (see
-  ; PixelSetP1Trail/PixelSetP2Trail) from tick one.
-  lda #<P1_OWN_BUF
-  sta WORK_PTR
-  lda #>P1_OWN_BUF
-  sta WORK_PTR+1
-  ldx #$18
+  lda #1
+@bank:
+  pha
+  jsr SetVBank
   lda #0
-@clrP1OwnPage:
-  ldy #0
-@clrP1OwnByte:
-  sta (WORK_PTR),y
-  iny
-  bne @clrP1OwnByte
-  inc WORK_PTR+1
-  dex
-  bne @clrP1OwnPage
-
-  lda #<P2_OWN_BUF
-  sta WORK_PTR
-  lda #>P2_OWN_BUF
-  sta WORK_PTR+1
-  ldx #$18
+  tax
+  jsr VAddr
+  ldx #>(LAYER_BYTES + 16 + 255)
   lda #0
-@clrP2OwnPage:
-  ldy #0
-@clrP2OwnByte:
-  sta (WORK_PTR),y
-  iny
-  bne @clrP2OwnByte
-  inc WORK_PTR+1
-  dex
-  bne @clrP2OwnPage
-
-  ; Clear VRAM pattern bytes (bitmap data plane). PHP/SEI/PLP wraps the
-  ; whole run -- see the comment above FillNameTable for why a single
-  ; VdpSetAddr followed by many VC_DATA writes needs this.
-  php
-  sei
-  lda #$00
-  ldx #$00
-  jsr VdpSetAddr
-  ldx #$18
-  lda #0
+  tay
 @vramPage:
-  ldy #0
-@vramByte:
   sta VC_DATA
   iny
-  bne @vramByte
+  bne @vramPage
   dex
   bne @vramPage
-  plp
-  rts
+  pla
+  inc a
+  cmp #3
+  bne @bank
+  lda #0
+  jmp SetVBank
 
+; DrawBorder - the arena's edge, a pixel wide all round.
 DrawBorder:
-  ldx #ARENA_MIN_X
-@top:
+  lda #<ARENA_MIN_X
+  sta FL_TILE
+  lda #>ARENA_MIN_X
+  sta FL_TILE+1
+@across:
+  lda FL_TILE+1
+  sta PX_HI
+  ldx FL_TILE
   lda #ARENA_MIN_Y
   jsr PixelSetBorder
-  inx
-  cpx #ARENA_MAX_X
-  bne @top
-  lda #ARENA_MIN_Y
-  jsr PixelSetBorder
-
-  ldx #ARENA_MIN_X
-@bottom:
   lda #ARENA_MAX_Y
   jsr PixelSetBorder
-  inx
-  cpx #ARENA_MAX_X
-  bne @bottom
-  lda #ARENA_MAX_Y
-  jsr PixelSetBorder
+  inc FL_TILE
+  bne @nextX
+  inc FL_TILE+1
+@nextX:
+  lda FL_TILE
+  cmp #<(ARENA_MAX_X + 1)
+  bne @across
+  lda FL_TILE+1
+  cmp #>(ARENA_MAX_X + 1)
+  bne @across
 
-  lda #ARENA_MIN_Y
+  lda #ARENA_MIN_Y + 1
   sta SCAN_TMP
-  inc SCAN_TMP
-@sides:
-  ; One pixel per row on each side, matching the top/bottom walls' own
-  ; single-pixel thickness (the previous version filled a full 8-pixel
-  ; byte column here, making the side walls eight times thicker than the
-  ; top/bottom ones).
-  ldx #ARENA_MIN_X
+@down:
+  stz PX_HI
+  ldx #<ARENA_MIN_X
   lda SCAN_TMP
   jsr PixelSetBorder
-
-  ldx #ARENA_MAX_X
+  lda #>ARENA_MAX_X
+  sta PX_HI
+  ldx #<ARENA_MAX_X
   lda SCAN_TMP
   jsr PixelSetBorder
-
   inc SCAN_TMP
   lda SCAN_TMP
   cmp #ARENA_MAX_Y
-  bne @sides
+  bne @down
   rts
 
-; -----------------------------------------------------------------------------
-; PixelSetP1Trail / PixelSetP2Trail - draw one trail pixel, then resolve
-; that pixel's 8-wide VDP color byte by majority vote instead of generic
-; PixelSet's first-claim-wins rule. TMS9918 Graphics II has one
-; foreground color per 8 horizontal pixels per scanline -- when both
-; trails pass within 8 pixels of each other on the same row, only one
-; color can ever be shown for that whole byte; that's a hardware fact, no
-; way around it. But first-claim-wins meant whichever trail happened to
-; touch the byte FIRST kept it forever, even after the other trail went
-; on to own most of the byte's actual pixels -- a single early pixel
-; could permanently mis-color a byte the other player ends up
-; dominating. Recomputing the color from a real per-pixel ownership
-; record (P1_OWN_BUF/P2_OWN_BUF, tracked separately from the VDP color
-; table) every time either trail touches the byte means it always
-; reflects whichever player currently owns more of its 8 pixels, not
-; just whoever arrived first.
-; An exact tie (equal ownership) renders as a flat TMS_WHITE "clash"
-; instead of picking one player's color -- there IS no correct choice
-; between two truly-equal owners, and forcing one still reads as a bug
-; (first tried "whichever trail is drawing now," which silently always
-; meant P2 since CommitP1Move always runs before CommitP2Move; then row
-; parity, which alternates the two colors every row and just trades one
-; glitchy-looking pattern for another). White reuses the same "shared
-; boundary" language the lead pixel and head sprites already use, so two
-; trails running side by side long enough to genuinely tie a byte reads
-; as a deliberate spark/clash effect, not a rendering error.
-; In: A = row, X = col
-; Out: none
-; Clobbers: A, X, Y, WORK_PTR, OFFSET_LO/HI, NUM_TMP, SCAN_TMP, SCAN_TMP2
-; -----------------------------------------------------------------------------
-PixelSetP1Trail:
-  jsr ComputePixelAddress
+; --- The riders' heads: a white pixel each, as sprites ---
 
-  ldy #0
-  lda (WORK_PTR),y
-  ora NUM_TMP
-  sta (WORK_PTR),y
-
-  php
-  sei
-  pha
-  lda OFFSET_LO
-  ldx OFFSET_HI
-  jsr VdpSetAddr
-  pla
+InitHeadSprites:
+  lda #0
+  jsr SetVBank
+  lda #<V_SPRPAT
+  ldx #>V_SPRPAT
+  jsr VAddr
+  lda #%10000000                   ; pattern 0: the top left pixel
   sta VC_DATA
-  plp
+  ldx #7
+@rows:
+  stz VC_DATA
+  dex
+  bne @rows
+  lda #<V_SPRATTR
+  ldx #>V_SPRATTR
+  jsr VAddr
+  jsr HideHead
+  ; falls through
 
-  lda OFFSET_LO                ; claim this pixel in P1's ownership plane
-  clc
-  adc #<P1_OWN_BUF
-  sta WORK_PTR
-  lda OFFSET_HI
-  adc #>P1_OWN_BUF
-  sta WORK_PTR+1
-  ldy #0
-  lda (WORK_PTR),y
-  ora NUM_TMP
-  sta (WORK_PTR),y
-  tax
-  lda PopcountTable,x
-  sta SCAN_TMP                  ; P1's bit count in this byte
-
-  lda OFFSET_LO                ; read (not claim) P2's count in this byte
-  clc
-  adc #<P2_OWN_BUF
-  sta WORK_PTR
-  lda OFFSET_HI
-  adc #>P2_OWN_BUF
-  sta WORK_PTR+1
-  ldy #0
-  lda (WORK_PTR),y
-  tax
-  lda PopcountTable,x
-  sta SCAN_TMP2
-
-  lda SCAN_TMP2
-  cmp SCAN_TMP
-  bcc @p1Wins                   ; P2count < P1count
-  beq @tie
-  lda P2_TRAIL_COLOR             ; P2count > P1count
-  bra @haveColor
-@p1Wins:
-  lda P1_TRAIL_COLOR
-  bra @haveColor
-@tie:
-  lda #TMS_WHITE
-@haveColor:
-  jmp TrailColorCommit
-
-PixelSetP2Trail:
-  jsr ComputePixelAddress
-
-  ldy #0
-  lda (WORK_PTR),y
-  ora NUM_TMP
-  sta (WORK_PTR),y
-
-  php
-  sei
-  pha
-  lda OFFSET_LO
-  ldx OFFSET_HI
-  jsr VdpSetAddr
-  pla
+HideHead:
+  lda #HIDE_Y
   sta VC_DATA
-  plp
+  stz VC_DATA
+  stz VC_DATA
+  stz VC_DATA
+  rts
 
-  lda OFFSET_LO                ; claim this pixel in P2's ownership plane
-  clc
-  adc #<P2_OWN_BUF
-  sta WORK_PTR
-  lda OFFSET_HI
-  adc #>P2_OWN_BUF
-  sta WORK_PTR+1
-  ldy #0
-  lda (WORK_PTR),y
-  ora NUM_TMP
-  sta (WORK_PTR),y
+UpdateHeadSprites:
+  lda #0
+  jsr SetVBank
+  lda #<V_SPRATTR
+  ldx #>V_SPRATTR
+  jsr VAddr
+  lda P1_ALIVE
+  beq @hide1
+  lda P1_XH
+  sta PX_HI
+  lda P1_Y
+  ldx P1_X
+  jsr PutHead
+  bra @second
+@hide1:
+  jsr HideHead
+@second:
+  lda P2_ALIVE
+  beq HideHead
+  lda P2_XH
+  sta PX_HI
+  lda P2_Y
+  ldx P2_X
+  ; falls through
+
+; PutHead - a head sprite's slot, at row A, column X (bit 8 in PX_HI).
+PutHead:
+  cmp #HIDE_Y
+  bcs HideHead
+  sta VC_DATA
+  stx VC_DATA
+  stz VC_DATA
+  lda PX_HI
+  beq @low
+  lda #HEAD_ATTR | VC_ATTR_BIT8    ; the attribute's top bit is X's bit 8
+  bra @attr
+@low:
+  lda #HEAD_ATTR
+@attr:
+  sta VC_DATA
+  rts
+
+; --- Pixels ---
+
+; ComputePixelAddress - where pixel (X, A) lives. In: A = row, X = column's
+; low byte, PX_HI = its bit 8. Out: carry clear, WORK_PTR = its byte in
+; SHADOW, OFFSET_LO/HI = that byte's place in SHADOW, NUM_TMP = which of the
+; byte's four pixels it is; or carry set if it's outside the arena's cells.
+; Keeps X. Clobbers: A, Y, PX_X, PX_Y
+ComputePixelAddress:
+  sta PX_Y
+  stx PX_X
+  lsr a
+  lsr a
+  lsr a
+  cmp #FIRST_ROW
+  bcc @out
+  cmp #LAST_ROW + 1
+  bcs @out
+  tay
+  txa
+  lsr a
+  lsr a
+  lsr a
+  ldx PX_HI
+  beq @col
+  ora #$20                         ; past 255: 32 cells on
+@col:
+  cmp #FIRST_COL
+  bcc @out
+  cmp #LAST_COL + 1
+  bcs @out
   tax
-  lda PopcountTable,x
-  sta SCAN_TMP2                 ; P2's bit count in this byte
-
-  lda OFFSET_LO                ; read (not claim) P1's count in this byte
+  lda RowOffLo,y
   clc
-  adc #<P1_OWN_BUF
-  sta WORK_PTR
-  lda OFFSET_HI
-  adc #>P1_OWN_BUF
-  sta WORK_PTR+1
-  ldy #0
-  lda (WORK_PTR),y
-  tax
-  lda PopcountTable,x
-  sta SCAN_TMP
-
-  lda SCAN_TMP
-  cmp SCAN_TMP2
-  bcc @p2Wins                   ; P1count < P2count
-  beq @tie
-  lda P1_TRAIL_COLOR             ; P1count > P2count
-  bra @haveColor
-@p2Wins:
-  lda P2_TRAIL_COLOR
-  bra @haveColor
-@tie:
-  lda #TMS_WHITE
-@haveColor:
-  ; fall through to TrailColorCommit
-
-; Shared tail for PixelSetP1Trail/PixelSetP2Trail: A = the winning
-; player's trail color (TMS_* value); OFFSET_LO/HI still hold this
-; pixel's byte offset from the ComputePixelAddress call above. Writes
-; that color to the byte's VDP color-table entry unconditionally (unlike
-; PixelSet's color path, which only writes when the byte was empty).
-TrailColorCommit:
+  adc ColOffLo,x
+  sta OFFSET_LO
+  lda RowOffHi,y
+  adc ColOffHi,x
+  sta OFFSET_HI
+  lda PX_Y                         ; two bytes a row
+  and #7
   asl a
-  asl a
-  asl a
-  asl a
-  ora #TMS_BLACK
   sta NUM_TMP
-
+  lda PX_X                         ; four pixels a byte
+  and #4
+  lsr a
+  lsr a
+  ora NUM_TMP
+  clc
+  adc OFFSET_LO
+  sta OFFSET_LO
+  bcc @in
+  inc OFFSET_HI
+@in:
   lda OFFSET_LO
   clc
-  adc #<COLOR_BUF
+  adc #<SHADOW
   sta WORK_PTR
   lda OFFSET_HI
-  adc #>COLOR_BUF
+  adc #>SHADOW
   sta WORK_PTR+1
-  ldy #0
-  lda NUM_TMP
-  sta (WORK_PTR),y
-
-  lda OFFSET_HI
+  lda PX_X
+  and #3
+  sta NUM_TMP
+  ldx PX_X
   clc
-  adc #>COLOR_TABLE_BASE
-  tax
-  lda OFFSET_LO
-  php
-  sei
-  jsr VdpSetAddr
-  lda NUM_TMP
-  sta VC_DATA
-  plp
+  rts
+@out:
+  ldx PX_X
+  sec
   rts
 
-; PopcountTable[n] = number of set bits in n -- used to compare how much
-; of a shared 8-pixel color byte each player currently owns.
-PopcountTable:
-  .byte 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4
-  .byte 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5
-  .byte 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5
-  .byte 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6
-  .byte 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5
-  .byte 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6
-  .byte 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6
-  .byte 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7
-  .byte 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5
-  .byte 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6
-  .byte 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6
-  .byte 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7
-  .byte 2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6
-  .byte 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7
-  .byte 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7
-  .byte 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
+; PlotValue - the pixel ComputePixelAddress found to value A (0-3), in SHADOW
+; and on the card. Clobbers: A, X, Y, VADDR
+PlotValue:
+  asl a
+  asl a
+  ora NUM_TMP
+  tay
+  ldx NUM_TMP
+  lda (WORK_PTR)
+  and PixClear,x
+  ora PixBits,y
+  sta (WORK_PTR)
+  ; The arena's first LAYER_BYTES are layer 0's tiles in bank 1, the rest
+  ; layer 1's in bank 2, each after its blank tile 0.
+  lda OFFSET_LO
+  sec
+  sbc #<LAYER_BYTES
+  sta VADDR
+  lda OFFSET_HI
+  sbc #>LAYER_BYTES
+  bcs @second
+  lda OFFSET_LO
+  sta VADDR
+  lda OFFSET_HI
+  ldy #1
+  bra @bank
+@second:
+  ldy #2
+@bank:
+  sta VADDR+1
+  tya
+  jsr SetVBank
+  lda VADDR
+  clc
+  adc #16
+  pha
+  lda VADDR+1
+  adc #0
+  tax
+  pla
+  jsr VAddr
+  lda (WORK_PTR)
+  sta VC_DATA
+  rts
 
-PixelSetBorder:
-  ldy #BORDER_FG
-  jmp PixelSet
-
-PixelSet:
+; PixelSetP1Trail / PixelSetP2Trail - a pixel of a player's trail.
+; In: A = row, X = column, PX_HI = column's bit 8.
+; Clobbers: A, X, Y, plus what PlotValue clobbers
+PixelSetP1Trail:
+  ldy #1
+  bra PlotTrail
+PixelSetP2Trail:
+  ldy #2
+PlotTrail:
   sty DIGIT_TMP
+  jsr ComputePixelAddress
+  bcs @done
+  lda DIGIT_TMP
+  jmp PlotValue
+@done:
+  rts
+
+; PixelSetBorder - a pixel of the arena's border, at row A, column X (bit 8 in
+; PX_HI). Keeps X and Y.
+PixelSetBorder:
   phx
   phy
   jsr ComputePixelAddress
-  ldy #0
-  lda (WORK_PTR),y
-  ora NUM_TMP
-  sta (WORK_PTR),y
+  bcs PixelDone
+  lda #3
+  bra PixelPlot
 
-  php
-  sei
+; UiPixel - pixel (X, A) of the title's 256 x 192 area as a screen pixel: A = row,
+; X = column's low byte, PX_HI = its bit 8.
+UiPixel:
+  clc
+  adc #UI_Y
   pha
-  lda OFFSET_LO
-  ldx OFFSET_HI
-  jsr VdpSetAddr
-  pla
-  sta VC_DATA
-  plp
-
-  lda DIGIT_TMP
-  asl a
-  asl a
-  asl a
-  asl a
-  ora #TMS_BLACK
-  sta NUM_TMP
-
-  ; Map the same byte offset into COLOR_BUF and only set a color once.
-  lda OFFSET_LO
+  txa
   clc
-  adc #<COLOR_BUF
-  sta WORK_PTR
-  lda OFFSET_HI
-  adc #>COLOR_BUF
-  sta WORK_PTR+1
-
-  ldy #0
-  lda (WORK_PTR),y
-  cmp #COLOR_EMPTY
-  bne @doneColor
-
-  lda NUM_TMP
-  sta (WORK_PTR),y
-
-  lda OFFSET_HI
-  clc
-  adc #>COLOR_TABLE_BASE
+  adc #UI_X
   tax
-  lda OFFSET_LO
-  php
-  sei
-  jsr VdpSetAddr
-  lda NUM_TMP
-  sta VC_DATA
-  plp
-@doneColor:
+  lda #0
+  adc #0
+  sta PX_HI
+  pla
+  rts
+
+; PixelSet - pixel (X, A) of the title's area in TMS color Y: a player's trail
+; color is that player's value, and white or any other color is 3, white
+; inside the arena. Keeps X and Y. Clobbers: A, DIGIT_TMP, WORK_PTR,
+; OFFSET_LO/HI, NUM_TMP, PX_X/Y/HI, VADDR
+PixelSet:
+  phx
+  phy
+  sty DIGIT_TMP
+  jsr UiPixel
+  jsr ComputePixelAddress
+  bcs PixelDone
+  lda DIGIT_TMP
+  ldy #3
+  cmp #TMS_WHITE
+  beq @have
+  ldy #1
+  cmp P1_TRAIL_COLOR
+  beq @have
+  iny
+  cmp P2_TRAIL_COLOR
+  beq @have
+  iny
+@have:
+  tya
+PixelPlot:
+  jsr PlotValue
+PixelDone:
   ply
   plx
   rts
 
-; -----------------------------------------------------------------------------
-; PixelClear - the inverse of PixelSet: unset one pixel's bit and reset its
-; color-cell back to COLOR_EMPTY unconditionally (erasing always releases
-; ownership, unlike PixelSet's first-writer-wins claim). Needed because
-; PixelSet only ever ORs bits on -- redrawing changed text (the title
-; screen's MODE: 1P/2P line, or a color swatch after the player cycles
-; color) without erasing first just overlays the new glyph's pixels on the
-; old one instead of replacing it, so nothing looks like it's updating.
-; In: A = row, X = col
-; Out: none
-; Clobbers: A, X, Y, plus everything ComputePixelAddress/VdpSetAddr clobber
-; -----------------------------------------------------------------------------
+; PixelClear - pixel (X, A) of the title's area back to nothing. Keeps X and Y.
 PixelClear:
   phx
   phy
+  jsr UiPixel
   jsr ComputePixelAddress
+  bcs PixelDone
+  lda #0
+  bra PixelPlot
 
-  lda NUM_TMP
-  eor #$FF
-  sta FONT_TMP              ; inverted mask; FONT_TMP is safe scratch here,
-                              ; not concurrently used by anything on this
-                              ; call path
-  ldy #0
-  lda (WORK_PTR),y
-  and FONT_TMP
-  sta (WORK_PTR),y
-
-  php
-  sei
-  pha
-  lda OFFSET_LO
-  ldx OFFSET_HI
-  jsr VdpSetAddr
-  pla
-  sta VC_DATA
-  plp
-
-  lda OFFSET_LO
-  clc
-  adc #<COLOR_BUF
-  sta WORK_PTR
-  lda OFFSET_HI
-  adc #>COLOR_BUF
-  sta WORK_PTR+1
-  lda #COLOR_EMPTY
-  ldy #0
-  sta (WORK_PTR),y
-
-  lda OFFSET_HI
-  clc
-  adc #>COLOR_TABLE_BASE
-  tax
-  lda OFFSET_LO
-  php
-  sei
-  jsr VdpSetAddr
-  lda #COLOR_EMPTY
-  sta VC_DATA
-  plp
-
-  ply
-  plx
-  rts
-
-; -----------------------------------------------------------------------------
-; EraseRect - clear every pixel in a rectangular region, via PixelClear.
-; In: A = top row, X = left col, TEXT_ROW_I/TEXT_COL_I hold the height and
-;     width on entry (caller sets them as byte values before calling,
-;     reusing DrawChar's scratch since the two never run concurrently)
-; Out: none
-; Clobbers: A, X, Y, SCAN_TMP, SCAN_TMP2, plus everything PixelClear clobbers
-; -----------------------------------------------------------------------------
+; EraseRect - clear a TEXT_ROW_I x TEXT_COL_I block of the title's area.
+; In: A = top row, X = left column, TEXT_ROW_I = height, TEXT_COL_I = width
+; Clobbers: A, X, Y, SCAN_TMP, SCAN_TMP2, FONT_HI, TEXT_COLOR, TEXT_ROW_I,
+;   TEXT_COL_I, plus what PixelClear clobbers
 EraseRect:
   sta SCAN_TMP               ; origin row
   stx SCAN_TMP2               ; origin col
   lda TEXT_ROW_I
-  sta FONT_HI                  ; stash height (PixelClear doesn't touch this)
+  sta FONT_HI                  ; height
   lda TEXT_COL_I
-  sta TEXT_COLOR                ; stash width -- deliberately NOT FONT_TMP,
-                                  ; since PixelClear (called every iteration
-                                  ; below) uses FONT_TMP as its own internal
-                                  ; scratch and would clobber it
+  sta TEXT_COLOR                ; width
 
   stz TEXT_ROW_I
 @rowLoop:
@@ -758,14 +777,19 @@ EraseRect:
   bne @rowLoop
   rts
 
+; PixelIsSet - A = 1 (Z clear) if screen pixel (X, A), bit 8 of X in PX_HI, is
+; drawn, 0 (Z set) if not. Outside the arena's cells counts as drawn. Keeps X
+; and Y.
 PixelIsSet:
   phx
   phy
   jsr ComputePixelAddress
-  ldy #0
-  lda (WORK_PTR),y
-  and NUM_TMP
+  bcs @set
+  ldx NUM_TMP
+  lda (WORK_PTR)
+  and PixMask,x
   beq @clear
+@set:
   ply
   plx
   lda #1
@@ -776,80 +800,8 @@ PixelIsSet:
   lda #0
   rts
 
-ComputePixelAddress:
-  ; In: A = y (0..191), X = x (0..255)
-  ; Out: WORK_PTR points to shadow-byte, OFFSET_LO/HI = VRAM byte address,
-  ;      NUM_TMP = mask bit for the pixel.
-  sta AI_TEST_Y
-  stx AI_TEST_X
+; --- Text, drawn into the arena a pixel at a time ---
 
-  ; Graphics II pattern-byte address:
-  ; third*0x800 + charRow*0x100 + xByte*8 + yWithinChar
-  ; where third = y/64, charRow = (y&63)/8.
-  lda AI_TEST_Y
-  and #$07
-  sta OFFSET_LO               ; yWithinChar
-  stz OFFSET_HI
-
-  lda AI_TEST_X
-  lsr a
-  lsr a
-  lsr a
-  asl a
-  asl a
-  asl a
-  clc
-  adc OFFSET_LO               ; + xByte*8
-  sta OFFSET_LO
-  bcc :+
-  inc OFFSET_HI
-:
-
-  lda AI_TEST_Y
-  and #$38                    ; char-row source bits
-  lsr a
-  lsr a
-  lsr a                        ; charRow (0..7)
-  clc
-  adc OFFSET_HI               ; + charRow*256 into high byte
-  sta OFFSET_HI
-
-  lda AI_TEST_Y
-  and #$C0                    ; third of screen
-  lsr a
-  lsr a
-  lsr a
-  clc
-  adc OFFSET_HI               ; + third*0x800 into high byte
-  sta OFFSET_HI
-
-  lda OFFSET_LO
-  clc
-  adc #<BITMAP_BUF
-  sta WORK_PTR
-  lda OFFSET_HI
-  adc #>BITMAP_BUF
-  sta WORK_PTR+1
-
-  lda AI_TEST_X
-  and #$07
-  tay
-  lda PixelMaskTable,y
-  sta NUM_TMP
-  rts
-
-PixelMaskTable:
-  .byte $80, $40, $20, $10, $08, $04, $02, $01
-
-; -----------------------------------------------------------------------------
-; DrawChar - plot one character's 5x7 pixel glyph into the bitmap plane.
-; In:  A = ASCII character code (space through 'Z'; anything outside that
-;      range draws nothing, since no game text uses it)
-;      TEXT_ROW/TEXT_COL = top-left pixel origin, TEXT_COLOR = TMS_* color
-; Out: none. TEXT_ROW/TEXT_COL are left unchanged (DrawText advances
-;      TEXT_COL between characters; a lone DrawChar caller can too).
-; Clobbers: A, X, Y, FONT_PTR, FONT_TMP, FONT_HI, TEXT_ROW_I, TEXT_COL_I
-; -----------------------------------------------------------------------------
 DrawChar:
   cmp #' '
   bcc @done
@@ -1113,189 +1065,9 @@ DrawColorSwatch:
   rts
 
 ; -----------------------------------------------------------------------------
-; DrawUpTriangle / DrawDownTriangle - a small 5x3 "you can go this way"
-; affordance. The color swatches already have an accurate hint in their
-; left/right chevrons, since they really are a left/right control; MODE
-; is a up/down control, so it gets a matching up/down shape instead of
-; reusing the chevrons sideways, which wouldn't actually say "up/down" to
-; anyone looking at it.
-; In: A = top row, X = left col, Y = color
-; Out: none
-; Clobbers: A, X, Y, SCAN_TMP, SCAN_TMP2, TEXT_COLOR, plus everything
-;   PixelSet clobbers
-; -----------------------------------------------------------------------------
-DrawUpTriangle:
-  sta SCAN_TMP               ; top row
-  stx SCAN_TMP2               ; left col
-  sty TEXT_COLOR
-
-  lda SCAN_TMP                ; row0, col+2
-  ldx SCAN_TMP2
-  inx
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row1, col+1
-  clc
-  adc #1
-  ldx SCAN_TMP2
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row1, col+2
-  clc
-  adc #1
-  ldx SCAN_TMP2
-  inx
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row1, col+3
-  clc
-  adc #1
-  ldx SCAN_TMP2
-  inx
-  inx
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row2, col+0
-  clc
-  adc #2
-  ldx SCAN_TMP2
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row2, col+1
-  clc
-  adc #2
-  ldx SCAN_TMP2
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row2, col+2
-  clc
-  adc #2
-  ldx SCAN_TMP2
-  inx
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row2, col+3
-  clc
-  adc #2
-  ldx SCAN_TMP2
-  inx
-  inx
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row2, col+4
-  clc
-  adc #2
-  ldx SCAN_TMP2
-  inx
-  inx
-  inx
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-  rts
-
-DrawDownTriangle:
-  sta SCAN_TMP               ; top row
-  stx SCAN_TMP2               ; left col
-  sty TEXT_COLOR
-
-  lda SCAN_TMP                ; row0, col+0
-  ldx SCAN_TMP2
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row0, col+1
-  ldx SCAN_TMP2
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row0, col+2
-  ldx SCAN_TMP2
-  inx
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row0, col+3
-  ldx SCAN_TMP2
-  inx
-  inx
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row0, col+4
-  ldx SCAN_TMP2
-  inx
-  inx
-  inx
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row1, col+1
-  clc
-  adc #1
-  ldx SCAN_TMP2
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row1, col+2
-  clc
-  adc #1
-  ldx SCAN_TMP2
-  inx
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row1, col+3
-  clc
-  adc #1
-  ldx SCAN_TMP2
-  inx
-  inx
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-
-  lda SCAN_TMP                ; row2, col+2
-  clc
-  adc #2
-  ldx SCAN_TMP2
-  inx
-  inx
-  ldy TEXT_COLOR
-  jsr PixelSet
-  rts
-
-; -----------------------------------------------------------------------------
 ; DrawLeftTriangle / DrawRightTriangle - a small 3x5 "you can go this way"
-; affordance, the same design language as DrawUpTriangle/DrawDownTriangle
-; (a solid filled arrowhead coming to a single-pixel point, not the font's
-; thin </> glyphs) rotated 90 degrees, for a left/right control -- the
-; color swatches. DrawTitleScreen centers this against an 8x8 swatch
-; (even height, so a perfect pixel-exact center isn't possible against a
-; 5-tall odd shape -- it lands within half a pixel, which reads as
-; centered) rather than trying to size the triangle to match the swatch
-; 1-for-1, which is what previously flattened its point into an edge.
+; affordance: a solid filled arrowhead coming to a single-pixel point, not
+; the font's thin </> glyphs, either side of the title menu's line.
 ; In: A = top row, X = left col, Y = color
 ; Out: none
 ; Clobbers: A, X, Y, SCAN_TMP, SCAN_TMP2, TEXT_COLOR, plus everything

@@ -7,6 +7,7 @@ STATE_PLAYING   = 1
 STATE_ROUNDOVER = 2
 STATE_GAMEOVER  = 3
 STATE_PAUSED    = 4
+STATE_LINKING   = 5             ; looking for the other machine (link.asm)
 
 DIR_UP          = 0
 DIR_DOWN        = 1
@@ -15,6 +16,11 @@ DIR_RIGHT       = 3
 
 MODE_1P         = 0
 MODE_2P         = 1
+MODE_LINK       = 2
+
+TICK_FRAMES     = 5             ; a tick every 5 pictures off a round (the
+                                ; title, the end of a round, linking); a
+                                ; round's own pace is SPEED's
 
 GAME_STATE      := $3A
 GAME_MODE       := $3B
@@ -85,7 +91,7 @@ KB_FIRE_P1      := $6D   ; DrainKeyboardSplit output: space seen this call.
 KB_FIRE_P2      := $6E   ; DrainKeyboardSplit output: enter seen this call.
                           ; Unused by TrailDuel, same reason as KB_FIRE_P1.
 
-; --- Bitmap-mode text renderer (src/font.asm, DrawChar/DrawText in vdp.asm) ---
+; --- Text, drawn into the arena a pixel at a time (src/font.asm, DrawChar/DrawText in vdp.asm) ---
 TEXT_ROW        := $6F   ; caller-set: top-left Y pixel origin
 TEXT_COL        := $70   ; caller-set: top-left X pixel origin (DrawText
                           ; advances this past each character it draws)
@@ -129,12 +135,125 @@ MENU_MODE_PREV  := $80
 ; exactly level on the axis that matters (no preference).
 AI_PREFERRED_DIR := $81
 
-BITMAP_BUF      = $2000
-COLOR_BUF       = $3800
+; vdp.asm: which 16 KB of video memory port A reaches now, a VRAM address, and
+; FillLayers' place in the layers' tables
+VBANK_NOW       := $82
+VADDR           := $83   ; 2 bytes, $83-$84
+FL_LAYER        := $85
+FL_PASS         := $86
+FL_ROW          := $87
+FL_COL          := $88
+FL_TILE         := $89   ; 2 bytes, $89-$8A
 
-; Per-pixel trail ownership, decoupled from the VDP's own color table --
-; see PixelSetP1Trail/PixelSetP2Trail in vdp.asm for why. Same 6144-byte,
-; 1-bit-per-pixel layout as BITMAP_BUF, just two separate planes (one per
-; player) instead of one.
-P1_OWN_BUF      = $5000
-P2_OWN_BUF      = $6800
+; The arena's tiles in RAM, as the card has them (see vdp.asm): 988 tiles of
+; 16 bytes, $2000-$5DBF
+SHADOW          = $2000
+
+; link.asm: two machines over the serial port
+LINK_ON         := $8B   ; the serial port is ours
+LINK_UP         := $8C   ; both machines found, the round under way
+LINK_BAD        := $8D   ; why the link can't go on (BAD_*), or 0
+LINK_SHOWN      := $8E   ; the LINK_BAD the linking screen shows
+HAVE_HELLO      := $8F   ; heard the other machine
+PEER_HAS        := $90   ; it has heard this one
+MY_SEAT         := $91   ; 0 the left rider, 1 the right
+MY_NONCE        := $92   ; 2 bytes, $92-$93
+PEER_NONCE      := $94   ; 2 bytes, $94-$95
+MY_COLOR        := $96   ; this machine's color pick, and the other's
+PEER_COLOR      := $97
+SESSION         := $98   ; the pairing a round's INPUT frames belong to
+LT              := $99   ; the round's tick
+MY_LAST         := $9A   ; the latest tick this machine has a heading for
+PEER_LAST       := $9B   ; the latest tick it has the other's heading for
+SAMPLED         := $9C   ; this tick's heading taken and sent
+LOCAL_DIR       := $9D   ; this machine's player's heading, held
+LINK_T          := $9E   ; frames or ticks until the next try
+STALL_T         := $9F   ; frames spent waiting on the other machine
+RX_HEAD         := $A0   ; the receive ring: filled by SysIrq,
+RX_TAIL         := $A1   ; emptied by LinkPoll
+PARSE_N         := $A2   ; bytes of FRAME so far
+LINK_N          := $A3
+CK_A            := $A4
+CK_B            := $A5
+LINK_S          := $A6
+FR_PTR          := $A7   ; 2 bytes, $A7-$A8
+OLD_IRQ         := $A9   ; 2 bytes, $A9-$AA: the Kernal's handler
+HAVE_OLD        := $AB   ; OLD_TX is a round's last INPUT, to keep sending
+TITLE_C1        := $AC   ; the title's colors, put back after a link
+TITLE_C2        := $AD
+LINK_TMP        := $AE
+T_PACK          := $AF
+FRAMES_LEFT     := $B0   ; MainLoop: frames until the next tick
+FRAME_COUNT     := $B1   ; 2 bytes, $B1-$B2: frames since start-up
+
+RX_BUF          = $0800  ; 256 bytes
+FRAME           = $0900  ; the frame coming in
+TX_FRAME        = $0910  ; the frame going out
+OLD_TX          = $0920  ; the last INPUT frame, to send again
+MY_IN           = $0930  ; 8 headings each, by tick & 7
+PEER_IN         = $0938
+SUMS            = $0940  ; StateSum at each of the last 8 ticks
+
+GPIO_INT_T2     = %00100000  ; the VIA's timer 2 interrupt (not in 6502-VDP.inc)
+
+; sound.asm: the driver's own, as it runs in the interrupt
+S_A             := $B3
+S_P             := $B4   ; 2 bytes, $B4-$B5
+S_B             := $B6
+S_C             := $B7
+
+S_REG           = $0A00  ; the SID's registers, as they'll be written each tick
+S_RTG           = $0A19  ; counts each voice's restarts
+S_PEND          = $0A1C  ; a voice to restart this tick
+S_Q             = $0A20  ; 8 requests from the game
+S_QH            = $0A28
+S_QT            = $0A29
+S_BUSY          = $0A2A
+S_ON            = $0A2B  ; a sound card and a timer to run it
+S_TICKS         = $0A2C  ; 2 bytes
+S_FXC           = $0A2E  ; the filter's cutoff, and how fast it closes
+S_FXK           = $0A2F
+SF_ID           = $0A30  ; each voice's effect, 3 bytes each from here
+SF_P            = $0A33
+SF_PL           = $0A36
+SF_PH           = $0A39
+SF_LEFT         = $0A3C
+SF_FL           = $0A3F
+SF_FH           = $0A42
+SF_TL           = $0A45
+SF_TH           = $0A48
+SF_FLG          = $0A4B
+SF_FIL          = $0A4E
+S_VARS_END      = $0A51
+
+; The screen is 320 pixels across, so x takes a second byte: bit 8 of each
+; rider's x, and of the pixel the drawing routines are given
+PX_HI           := $B8   ; bit 8 of the column passed in X
+PX_X            := $B9   ; ComputePixelAddress's own copies
+PX_Y            := $BA
+P1_XH           := $BB
+P2_XH           := $BC
+P1_NEXT_XH      := $BD
+P2_NEXT_XH      := $BE
+AI_TEST_XH      := $BF
+
+; The title's menu (game.asm) and the speed
+MENU_ROW        := $C0   ; the line the arrows are on: MENU_MODE ...
+LAST_MENU_ROW   := $C1
+MENU_PREV       := $C2   ; up, down, left and right held last tick (one press, one step)
+SPEED           := $C3   ; SPEED_SLOW, _NORMAL or _FAST
+LAST_SPEED      := $C4
+MY_SPEED        := $C5   ; link.asm: this machine's speed pick, the other's,
+PEER_SPEED      := $C6   ; the title's to put back, and the delay for the
+TITLE_SPEED     := $C7   ; speed both play at
+LDELAY          := $C8
+
+MENU_MODE       = 0
+MENU_SPEED      = 1
+MENU_P1         = 2
+MENU_P2         = 3
+MENU_ROWS       = 4
+
+SPEED_SLOW      = 0
+SPEED_NORMAL    = 1
+SPEED_FAST      = 2

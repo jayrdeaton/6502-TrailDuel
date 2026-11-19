@@ -1,14 +1,13 @@
 ; =============================================================================
 ;   input.asm - TrailDuel input shim using 6502-Lib polling
 ; =============================================================================
-;   Joystick-first, keyboard-fallback: PollInput (P1) and PollInputP2 each
-;   poll their own joystick port via 6502-Lib's PollJoy1/PollJoy2, and fall
-;   back to this tick's already-drained keyboard split (WASD=P1, arrows=P2)
-;   only when that player's joystick shows no direction at all this poll
-;   (including when no GPIO card is fitted). DrainKeyboardSplit is called
-;   exactly once per tick, from PollInput (which runs first in MainLoop),
-;   so PollInputP2 reuses the same drain window's KB_DIR_P2 result instead
-;   of re-draining an already-empty Chrin buffer.
+;   Joystick-first, keyboard-fallback: PollInput reads both joystick ports
+;   via 6502-Lib's PollJoy1/PollJoy2 and drains the keyboard once a tick;
+;   each player then takes their own stick's direction, falling back to the
+;   keyboard split (WASD=P1, arrows=P2) only when that stick shows no
+;   direction at all this poll (including when no GPIO card is fitted).
+;   PollInputP2, which runs after PollInput in MainLoop, reuses the same
+;   reads rather than draining an already-empty Chrin buffer.
 ;
 ;   A bike always advances forward every tick regardless of input - turning
 ;   is a discrete heading change, not something that needs to be held to
@@ -21,14 +20,16 @@
 .include "../../6502-Lib/core/input.asm"
 
 ; -----------------------------------------------------------------------------
-; PollInput - P1: joystick 1 first, WASD fallback when idle. Also drains
-; the keyboard (once, for both players) and ORs joystick A / space into
-; START_PRESSED, independent of the direction priority.
+; PollInput - P1: joystick 1 first, WASD fallback when idle. Also reads
+; joystick 2 and drains the keyboard (once, for both players), and ORs A on
+; either joystick, space or enter into START_PRESSED, independent of the
+; direction priority.
 ; -----------------------------------------------------------------------------
 PollInput:
 	stz START_PRESSED
 
 	jsr PollJoy1
+	jsr PollJoy2
 	jsr DrainKeyboardSplit
 
 	lda JOY_STATE
@@ -69,9 +70,10 @@ PollInput:
 	sta NEXT_DIR
 @doneDir:
 
-	; Fire/A: OR'd independently of direction priority - joystick A held
-	; OR keyboard space seen this drain, either sets START_PRESSED.
+	; Fire/A: OR'd independently of direction priority - A held on either
+	; joystick, or space or enter seen this drain, sets START_PRESSED.
 	lda JOY_STATE
+	and JOY_STATE2                ; active low: pressed on either stick
 	and #JOY_A
 	bne @checkKbFire
 	lda #1
@@ -97,26 +99,14 @@ PollInput:
 	rts
 
 ; -----------------------------------------------------------------------------
-; PollInputP2 - P2: joystick 2 first, arrow-key fallback when idle. Always
-; polled, regardless of GAME_MODE -- this used to be gated on
-; GAME_MODE == MODE_2P (skip reading a controller nothing in 1P mode would
-; use), but that gate ran on the title screen too, where GAME_MODE reflects
-; whichever mode happens to be currently selected rather than "are we
-; actually playing 1P". With 1P as the default, that meant JOY_STATE2 was
-; never written at all while sitting on the title screen -- left at
-; whatever garbage was in RAM at boot ($00, which reads as every direction
-; held at once) -- and SetModeFromInput/HandleColorPicker read that as a
-; real button press, silently flipping GAME_MODE the instant the title
-; screen loaded. Safe to always poll: during actual 1P gameplay,
-; ComputeP2AIDirection unconditionally overwrites P2_NEXT_DIR right after
-; this runs, on every one of its exit paths, so whatever a real (or
-; absent) P2 controller reports here never survives to affect anything.
-; Reuses KB_DIR_P2 from the DrainKeyboardSplit call PollInput already made
-; this tick.
+; PollInputP2 - P2: joystick 2 first (read by PollInput), arrow-key fallback
+; when idle. Always run, whatever GAME_MODE says: on the title screen GAME_MODE
+; is only the mode picked so far, and MenuInput reads
+; player 2's stick there too. During 1P play ComputeP2AIDirection overwrites
+; P2_NEXT_DIR right after this on every path, so a stick in port 2 can't steer
+; the CPU.
 ; -----------------------------------------------------------------------------
 PollInputP2:
-	jsr PollJoy2
-
 	lda JOY_STATE2
 	and #(JOY_UP | JOY_DOWN | JOY_LEFT | JOY_RIGHT)
 	cmp #(JOY_UP | JOY_DOWN | JOY_LEFT | JOY_RIGHT)

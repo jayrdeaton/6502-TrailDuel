@@ -1,0 +1,5 @@
+*.map
+*.o
+*.sav
+test/out/
+.DS_Store
