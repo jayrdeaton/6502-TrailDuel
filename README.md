@@ -5,7 +5,7 @@ TrailDuel for the [AC6502 ACE](https://github.com/acwright/6502-ACE), a trail du
 
 It runs on an ACE with a [6502-PICOVDP](https://github.com/acwright/6502-PICOVDP) on BIOS 2.x, as a 128 KB Flash Cart, on the whole 320 x 240 screen: the arena is 304 x 208. Until 2026-11-19 it was a 32 KB cart for the TMS9918A on BIOS 1.x, whose bitmap mode the PICOVDP doesn't have; that build is in the history before then.
 
-**[Play it in your browser](https://games.infinitetoken.com/6502/trailduel)**, running in A.C. Wright's emulator.
+**[Play it in your browser](https://games.infinitetoken.com/6502/trailduel)**, running in A.C. Wright's emulator. The cartridge is on [itch.io](https://jayrdeaton.itch.io/trailduel) too.
 
 ## Playing it
 
